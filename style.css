@@ -62,7 +62,7 @@ body {
   animation: floatAmbient 22s ease-in-out infinite alternate;
   will-change: transform;
 }
-.glow-blob-1 { top: -10%; left: -10%; animation-delay: 0s; }
+.glow-blob-1 { top: 0; left: 0; animation: none; transform: translate3d(-10vw, -10vh, 0); }
 .glow-blob-2 { top: 40%; right: -15%; background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, rgba(236,72,153,0.05) 40%, rgba(253,242,248,0) 70%); animation-duration: 28s; animation-delay: -5s; }
 .glow-blob-3 { bottom: -10%; left: 20%; animation-duration: 25s; animation-delay: -10s; }
 
@@ -130,11 +130,33 @@ input, select, textarea { font-family: var(--font-body); font-size: 15px; }
 .eyebrow-light { color: var(--rose); opacity: 0.9; }
 
 /* ── REVEAL ANIMATIONS ───────────────────────────────── */
-.reveal {
+.reveal, .reveal-up {
   opacity: 0; transform: translateY(32px);
   transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1);
+  will-change: transform, opacity;
 }
-.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal.visible, .reveal-up.visible { opacity: 1; transform: translateY(0); }
+
+.reveal-scale {
+  opacity: 0; transform: scale(0.95);
+  transition: opacity 0.75s cubic-bezier(0.22,1,0.36,1), transform 0.75s cubic-bezier(0.22,1,0.36,1);
+  will-change: transform, opacity;
+}
+.reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+.reveal-left {
+  opacity: 0; transform: translateX(-40px);
+  transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+  will-change: transform, opacity;
+}
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+.reveal-right {
+  opacity: 0; transform: translateX(40px);
+  transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+  will-change: transform, opacity;
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
 
 .reveal-header {
   opacity: 0; transform: translateY(24px);

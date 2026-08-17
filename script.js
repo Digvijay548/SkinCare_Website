@@ -568,8 +568,17 @@ function initBehaviours() {
     reveals.forEach(el => el.classList.add("visible"));
   } else {
     reveals.forEach((el, idx) => {
-      el.classList.add("reveal");
-      el.dataset.revealIndex = idx % 5;
+      // Map elements to custom reveal styles
+      if (el.classList.contains("service-card") || el.classList.contains("course-card")) {
+        el.classList.add("reveal-scale");
+      } else if (el.classList.contains("about-feat") || el.classList.contains("appt-feat") || el.classList.contains("cred-item")) {
+        el.classList.add("reveal-left");
+      } else if (el.classList.contains("contact-card") || el.classList.contains("experience-card")) {
+        el.classList.add("reveal-right");
+      } else {
+        el.classList.add("reveal-up");
+      }
+      el.dataset.revealIndex = idx % 4; // Max stagger delay is 300ms
     });
     const ro = new IntersectionObserver(entries => {
       entries.forEach(entry => {
@@ -627,6 +636,38 @@ function initBehaviours() {
     waFloat.style.opacity   = y > lastY + 60 ? "0" : "";
     lastY = y;
   }, { passive: true });
+
+  /* ── HERO SCROLL PARALLAX ── */
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY;
+    const img = document.querySelector(".hero-bg-img img");
+    if (y < window.innerHeight && img && !reducedMotion.matches) {
+      img.style.transform = `translate3d(0, ${y * 0.32}px, 0) scale(${1 + y * 0.00012})`;
+    }
+  }, { passive: true });
+
+  /* ── MOUSE GLOW FOLLOWER ── */
+  const glow1 = document.querySelector(".glow-blob-1");
+  if (glow1 && !reducedMotion.matches) {
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 3;
+    let posX = mouseX;
+    let posY = mouseY;
+
+    window.addEventListener("mousemove", e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }, { passive: true });
+
+    function animGlow() {
+      posX += (mouseX - posX) * 0.05;
+      posY += (mouseY - posY) * 0.05;
+      // Offset by 225px to center the 450px glow-blob under the cursor
+      glow1.style.transform = `translate3d(${posX - 225}px, ${posY - 225}px, 0)`;
+      requestAnimationFrame(animGlow);
+    }
+    animGlow();
+  }
 
   /* ── COUNTER ANIMATION ── */
   function animateCounter(el, target, suffix = "") {
