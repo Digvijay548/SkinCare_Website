@@ -555,36 +555,47 @@ function initBehaviours() {
   }, { rootMargin: "-40% 0px -55% 0px" });
   sections.forEach(s => secObs.observe(s));
 
-  /* ── SCROLL REVEAL — pre-assign stagger index (O(1)) ── */
+  /* ── SCROLL REVEAL ── */
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const reveals = Array.from(document.querySelectorAll(
     ".service-card, .why-card, .testi-card, .about-feat, .contact-card, .experience-card, .appt-feat, .cred-item, .course-card, .academy-feat, .academy-stat"
   )).filter(el => {
     const parentSec = el.closest("section");
     return !parentSec || parentSec.style.display !== "none";
   });
-  reveals.forEach((el, idx) => {
-    el.classList.add("reveal");
-    el.dataset.revealIndex = idx % 6;
-  });
-  const ro = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const delay = parseInt(entry.target.dataset.revealIndex || 0) * 80;
-        setTimeout(() => { entry.target.classList.add("visible"); ro.unobserve(entry.target); }, delay);
-      }
+
+  if (reducedMotion.matches) {
+    reveals.forEach(el => el.classList.add("visible"));
+  } else {
+    reveals.forEach((el, idx) => {
+      el.classList.add("reveal");
+      el.dataset.revealIndex = idx % 5;
     });
-  }, { threshold: 0.12 });
-  reveals.forEach(el => ro.observe(el));
+    const ro = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const delay = parseInt(entry.target.dataset.revealIndex || 0) * 100;
+          setTimeout(() => { entry.target.classList.add("visible"); ro.unobserve(entry.target); }, delay);
+        }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => ro.observe(el));
+  }
 
   /* ── SECTION HEADER REVEAL ── */
-  document.querySelectorAll(".section-header, .about-text-col, .appt-info, #contactHeader, .academy-header").forEach(el => {
-    const parentSec = el.closest("section");
-    if (parentSec && parentSec.style.display === "none") return;
-    el.classList.add("reveal-header");
-    new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("header-visible"); } });
-    }, { threshold: 0.2 }).observe(el);
-  });
+  const headers = document.querySelectorAll(".section-header, .about-text-col, .appt-info, #contactHeader, .academy-header");
+  if (reducedMotion.matches) {
+    headers.forEach(el => el.classList.add("header-visible"));
+  } else {
+    headers.forEach(el => {
+      const parentSec = el.closest("section");
+      if (parentSec && parentSec.style.display === "none") return;
+      el.classList.add("reveal-header");
+      new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("header-visible"); } });
+      }, { threshold: 0.15 }).observe(el);
+    });
+  }
 
   /* ── SET MIN DATE ── */
   const dateInput = document.getElementById("preferredDate");
@@ -651,15 +662,23 @@ function initBehaviours() {
   })();
 
   /* ── CARD TILT EFFECT ── */
-  document.querySelectorAll("[data-tilt]").forEach(card => {
-    card.addEventListener("mousemove", e => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      card.style.transform = `perspective(800px) rotateY(${x*8}deg) rotateX(${-y*8}deg) translateY(-8px)`;
+  if (!reducedMotion.matches) {
+    document.querySelectorAll("[data-tilt]").forEach(card => {
+      card.style.transition = "transform 0.1s ease, box-shadow 0.1s ease";
+      card.addEventListener("mousemove", e => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = `perspective(1000px) rotateY(${x*10}deg) rotateX(${-y*10}deg) translateY(-10px)`;
+        card.style.boxShadow = "var(--shadow-lg), 0 20px 50px rgba(139, 92, 246, 0.15)";
+      });
+      card.addEventListener("mouseleave", () => {
+        card.style.transition = "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1)";
+        card.style.transform = "";
+        card.style.boxShadow = "";
+      });
     });
-    card.addEventListener("mouseleave", () => { card.style.transform = ""; });
-  });
+  }
 
   /* ── TYPEWRITER ON HERO ACCENT ── */
   const tw = document.getElementById("heroTypewriter");
