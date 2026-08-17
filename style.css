@@ -900,3 +900,169 @@ textarea:focus-visible {
   outline-offset: 4px;
   box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.25);
 }
+
+/* ── DEPTH CAROUSEL ──────────────────────────────────── */
+.depth-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: var(--dc-perspective, 1400px);
+  perspective-origin: 50% 50%;
+  touch-action: pan-y;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.depth-carousel:active {
+  cursor: grabbing;
+}
+
+.depth-carousel:focus-visible {
+  outline: 3px solid var(--purple);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.depth-carousel__stage {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.depth-carousel__card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  overflow: hidden;
+  background: var(--plum);
+  box-shadow:
+    0 30px 60px -20px rgba(26, 10, 46, 0.45),
+    0 8px 20px -10px rgba(26, 10, 46, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  will-change: transform, opacity, filter;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.depth-carousel__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.depth-carousel__tint {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.depth-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3000;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  color: var(--plum);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition:
+    background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.2s ease,
+    color 0.3s ease;
+}
+
+.depth-carousel__arrow:hover {
+  background: var(--purple);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+}
+
+.depth-carousel__arrow:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.depth-carousel__arrow--prev {
+  left: 32px;
+}
+
+.depth-carousel__arrow--next {
+  right: 32px;
+}
+
+.depth-carousel__dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(26, 10, 46, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.depth-carousel__dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition:
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.depth-carousel__dot.is-active {
+  width: 22px;
+  background: var(--rose);
+  box-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
+}
+
+@media (max-width: 768px) {
+  .depth-carousel__arrow--prev {
+    left: 12px;
+  }
+  .depth-carousel__arrow--next {
+    right: 12px;
+  }
+  .depth-carousel {
+    min-height: 360px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-carousel__card {
+    will-change: auto;
+  }
+  .depth-carousel__arrow,
+  .depth-carousel__dot {
+    transition: none;
+  }
+}

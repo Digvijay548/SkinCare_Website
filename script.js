@@ -5,6 +5,359 @@
 
 let D = null;
 
+/* ── DEPTH CAROUSEL CLASS ────────────────────────────── */
+class VanillaDepthCarousel {
+  constructor(el, props = {}) {
+    this.root = el;
+    this.props = {
+      items: props.items || [],
+      cardWidth: props.cardWidth || 300,
+      cardHeight: props.cardHeight || 380,
+      radius: props.radius || 18,
+      tint: props.tint || '#05060a',
+      depth: props.depth || 220,
+      spread: props.spread || 90,
+      tilt: props.tilt || 22,
+      tiltDirection: props.tiltDirection || 'right',
+      perspective: props.perspective || 1400,
+      visibleCards: props.visibleCards || 4,
+      falloff: props.falloff || 0.2,
+      blur: props.blur || 6,
+      duration: props.duration || 700,
+      ease: props.ease || 'power3.out',
+      autoplay: props.autoplay || false,
+      autoplayDelay: props.autoplayDelay || 3200,
+      loop: props.loop || true,
+      showControls: props.showControls !== false,
+      showIndicators: props.showIndicators !== false,
+      onChange: props.onChange || null,
+      ...props
+    };
+
+    this.data = this.props.items.map(it => (typeof it === 'string' ? { image: it, alt: '' } : it));
+    this.count = this.data.length;
+
+    this.pos = 0;
+    this.focusIdx = 0;
+    this.activeIdx = 0;
+    this.tween = null;
+    this.scale = 1;
+    
+    this.drag = null;
+    this.wheelTimer = null;
+    this.autoTimer = null;
+    this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    this.init();
+  }
+
+  init() {
+    this.root.style.setProperty('--dc-perspective', `${this.props.perspective}px`);
+    this.root.classList.add('depth-carousel');
+    this.root.setAttribute('role', 'group');
+    this.root.setAttribute('aria-roledescription', 'carousel');
+    this.root.setAttribute('aria-label', 'Depth carousel');
+    this.root.setAttribute('tabIndex', '0');
+
+    // Create stage
+    this.stage = document.createElement('div');
+    this.stage.className = 'depth-carousel__stage';
+    this.root.appendChild(this.stage);
+
+    // Create cards
+    this.cards = [];
+    this.overlays = [];
+    this.data.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = 'depth-carousel__card';
+      card.style.width = `${this.props.cardWidth}px`;
+      card.style.height = `${this.props.cardHeight}px`;
+      card.style.borderRadius = `${this.props.radius}px`;
+      card.setAttribute('aria-roledescription', 'slide');
+      card.setAttribute('aria-label', `${i + 1} of ${this.count}`);
+      card.setAttribute('aria-hidden', 'true');
+      
+      const img = document.createElement('img');
+      img.className = 'depth-carousel__img';
+      img.src = item.image;
+      img.alt = item.alt || '';
+      img.draggable = false;
+      card.appendChild(img);
+
+      const tintEl = document.createElement('span');
+      tintEl.className = 'depth-carousel__tint';
+      tintEl.style.background = this.props.tint;
+      card.appendChild(tintEl);
+
+      card.addEventListener('click', () => this.onCardClick(i));
+
+      this.stage.appendChild(card);
+      this.cards.push(card);
+      this.overlays.push(tintEl);
+    });
+
+    // Create controls
+    if (this.props.showControls && this.count > 1) {
+      this.prevBtn = document.createElement('button');
+      this.prevBtn.type = 'button';
+      this.prevBtn.className = 'depth-carousel__arrow depth-carousel__arrow--prev';
+      this.prevBtn.setAttribute('aria-label', 'Previous slide');
+      this.prevBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      this.prevBtn.addEventListener('click', () => this.navigateBy(-1));
+      this.root.appendChild(this.prevBtn);
+
+      this.nextBtn = document.createElement('button');
+      this.nextBtn.type = 'button';
+      this.nextBtn.className = 'depth-carousel__arrow depth-carousel__arrow--next';
+      this.nextBtn.setAttribute('aria-label', 'Next slide');
+      this.nextBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      this.nextBtn.addEventListener('click', () => this.navigateBy(1));
+      this.root.appendChild(this.nextBtn);
+    }
+
+    // Create indicators
+    if (this.props.showIndicators && this.count > 1) {
+      this.dotsContainer = document.createElement('div');
+      this.dotsContainer.className = 'depth-carousel__dots';
+      this.dotsContainer.setAttribute('role', 'tablist');
+      this.dotsContainer.setAttribute('aria-label', 'Slides');
+      
+      this.dots = [];
+      this.data.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.role = 'tab';
+        dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+        dot.className = 'depth-carousel__dot';
+        dot.addEventListener('click', () => this.setFocus(i, true));
+        this.dotsContainer.appendChild(dot);
+        this.dots.push(dot);
+      });
+      this.root.appendChild(this.dotsContainer);
+    }
+
+    // Bind events
+    this.root.addEventListener('pointerdown', e => this.onPointerDown(e));
+    this.root.addEventListener('pointermove', e => this.onPointerMove(e));
+    const endDrag = () => this.onPointerEnd();
+    this.root.addEventListener('pointerup', endDrag);
+    this.root.addEventListener('pointercancel', endDrag);
+    this.root.addEventListener('keydown', e => this.onKeyDown(e));
+    this.root.addEventListener('wheel', e => this.onWheel(e), { passive: false });
+
+    // Resize Observer
+    this.ro = new ResizeObserver(entries => {
+      if (!entries[0]) return;
+      const w = entries[0].contentRect.width;
+      const needed = this.props.cardWidth + Math.abs(this.props.spread) * 2 + 120;
+      this.scale = Math.min(Math.max(w / needed, 0.4), 1);
+      this.layout(this.pos);
+    });
+    this.ro.observe(this.root);
+
+    // Autoplay
+    if (this.props.autoplay && !this.reduced && this.count > 1) {
+      let hovered = false;
+      let focused = false;
+      const start = () => {
+        this.stopAutoplay();
+        this.autoTimer = setInterval(() => {
+          if (!hovered && !focused) this.navigateBy(1);
+        }, Math.max(this.props.autoplayDelay, 600));
+      };
+      
+      this.root.addEventListener('mouseenter', () => { hovered = true; });
+      this.root.addEventListener('mouseleave', () => { hovered = false; });
+      this.root.addEventListener('focusin', () => { focused = true; });
+      this.root.addEventListener('focusout', () => { focused = false; });
+      start();
+    }
+
+    this.layout(this.pos);
+    this.updateActiveState(0);
+  }
+
+  clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
+
+  layout(pos) {
+    const n = this.count;
+    if (!n) return;
+    const dir = this.props.tiltDirection === 'left' ? -1 : 1;
+    const sc = this.scale;
+
+    for (let i = 0; i < n; i++) {
+      const el = this.cards[i];
+      if (!el) continue;
+
+      let d = i - pos;
+      if (this.props.loop && n > 1) {
+        d = ((d % n) + n) % n;
+        if (d > n / 2) d -= n;
+      }
+
+      const back = Math.max(0, d);
+      const az = Math.abs(d);
+      const shown = az <= this.props.visibleCards + 0.5;
+
+      const tz = -this.props.depth * d;
+      const tx = dir * this.props.spread * d;
+      const ry = dir * this.props.tilt * this.clamp(d, 0, 1);
+
+      let opacity = d < 0 ? Math.max(0, 1 + d) : 1;
+      if (!shown) opacity = 0;
+
+      const brightness = Math.max(0.15, 1 - back * this.props.falloff);
+      const blurPx = this.props.blur > 0 ? Math.min(this.props.blur, (back / Math.max(1, this.props.visibleCards)) * this.props.blur) : 0;
+      const zi = Math.round(2000 - d * 20);
+
+      el.style.transform = `translate(-50%, -50%) scale(${sc}) translateX(${tx.toFixed(2)}px) translateZ(${tz.toFixed(2)}px) rotateY(${ry.toFixed(3)}deg)`;
+      el.style.opacity = opacity.toFixed(3);
+      el.style.filter = `brightness(${brightness.toFixed(3)}) blur(${blurPx.toFixed(2)}px)`;
+      el.style.zIndex = String(zi);
+      el.style.pointerEvents = shown && opacity > 0.05 ? 'auto' : 'none';
+
+      const ov = this.overlays[i];
+      if (ov) ov.style.opacity = this.clamp(back * this.props.falloff * 1.25, 0, 0.86).toFixed(3);
+    }
+  }
+
+  updateActiveState(idx) {
+    this.activeIdx = idx;
+    this.cards.forEach((card, i) => {
+      card.setAttribute('aria-hidden', String(i !== idx));
+    });
+    if (this.dots) {
+      this.dots.forEach((dot, i) => {
+        dot.setAttribute('aria-selected', String(i === idx));
+        dot.classList.toggle('is-active', i === idx);
+      });
+    }
+    this.props.onChange?.(idx, this.data[idx]);
+  }
+
+  tweenTo(target, animate) {
+    if (this.tween) this.tween.kill();
+    const proxy = { p: this.pos };
+    const dur = animate && !this.reduced ? this.props.duration / 1000 : 0;
+    this.tween = gsap.to(proxy, {
+      p: target,
+      duration: dur,
+      ease: this.props.ease,
+      onUpdate: () => {
+        this.pos = proxy.p;
+        this.layout(proxy.p);
+      },
+      onComplete: () => {
+        const n = this.count;
+        if (n > 0) this.pos = ((this.pos % n) + n) % n;
+        this.layout(this.pos);
+      }
+    });
+  }
+
+  setFocus(rawIndex, animate = true) {
+    const n = this.count;
+    if (!n) return;
+    const idx = this.props.loop ? ((rawIndex % n) + n) % n : this.clamp(rawIndex, 0, n - 1);
+    let delta = idx - this.pos;
+    if (this.props.loop && n > 1) {
+      delta = ((delta % n) + n) % n;
+      if (delta > n / 2) delta -= n;
+    }
+    this.tweenTo(this.pos + delta, animate);
+    if (idx !== this.focusIdx) {
+      this.focusIdx = idx;
+      this.updateActiveState(idx);
+    }
+  }
+
+  navigateBy(step) { this.setFocus(this.focusIdx + step, true); }
+
+  onWheel(e) {
+    if (this.count < 2) return;
+    e.preventDefault();
+    if (this.tween) this.tween.kill();
+    const raw = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    const delta = e.deltaMode === 1 ? raw * 24 : raw;
+    const step = this.clamp(delta / (this.props.cardWidth * 0.9), -0.6, 0.6);
+    this.pos += step;
+    this.layout(this.pos);
+    if (this.wheelTimer) clearTimeout(this.wheelTimer);
+    this.wheelTimer = setTimeout(() => this.setFocus(Math.round(this.pos), true), 130);
+  }
+
+  onPointerDown(e) {
+    if (this.count < 2) return;
+    if (this.tween) this.tween.kill();
+    this.drag = {
+      x: e.clientX,
+      startPos: this.pos,
+      lastX: e.clientX,
+      lastT: performance.now(),
+      v: 0,
+      moved: false,
+      id: e.pointerId
+    };
+  }
+
+  onPointerMove(e) {
+    if (!this.drag) return;
+    const stepPx = Math.max(this.props.cardWidth * 0.55 * this.scale, 40);
+    const dx = e.clientX - this.drag.x;
+    if (!this.drag.moved && Math.abs(dx) > 4) {
+      this.drag.moved = true;
+      this.root.setPointerCapture(this.drag.id);
+    }
+    if (!this.drag.moved) return;
+    const now = performance.now();
+    const dt = Math.max(now - this.drag.lastT, 1);
+    this.drag.v = (e.clientX - this.drag.lastX) / dt;
+    this.drag.lastX = e.clientX;
+    this.drag.lastT = now;
+    this.pos = this.drag.startPos - dx / stepPx;
+    this.layout(this.pos);
+  }
+
+  onPointerEnd() {
+    if (!this.drag) return;
+    const drag = this.drag;
+    this.drag = null;
+    if (!drag.moved) return;
+    const stepPx = Math.max(this.props.cardWidth * 0.55 * this.scale, 40);
+    const projected = this.pos - (drag.v * 180) / stepPx;
+    this.setFocus(Math.round(projected), true);
+  }
+
+  onKeyDown(e) {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      this.navigateBy(-1);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      this.navigateBy(1);
+    }
+  }
+
+  onCardClick(index) {
+    if (this.drag && this.drag.moved) return;
+    this.setFocus(index, true);
+  }
+
+  stopAutoplay() {
+    if (this.autoTimer) clearInterval(this.autoTimer);
+    this.autoTimer = null;
+  }
+
+  destroy() {
+    if (this.ro) this.ro.disconnect();
+    this.stopAutoplay();
+    if (this.wheelTimer) clearTimeout(this.wheelTimer);
+    if (this.tween) this.tween.kill();
+  }
+}
+
+let D = null;
+
 /* ── HELPERS ──────────────────────────────────────────── */
 function esc(str) {
   return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
@@ -291,6 +644,46 @@ function renderTestimonials() {
   `).join("");
 }
 
+/* ── RENDER: GALLERY / SHOWCASE ───────────────────────── */
+function renderGallery() {
+  const images = [
+    { image: 'images/svc-facial.jpg', alt: 'Signature Facial Glow Treatment' },
+    { image: 'images/svc-microderm.jpg', alt: 'Advanced Microdermabrasion Session' },
+    { image: 'images/svc-peel.jpg', alt: 'Chemical Peel & Brightening Care' },
+    { image: 'images/svc-acne.jpg', alt: 'Dermal Acne Clarifying Therapy' },
+    { image: 'images/svc-antiaging-new.jpg', alt: 'Youthful Anti-Aging Recovery Care' },
+    { image: 'images/svc-laser.jpg', alt: 'Laser Resurfacing Treatment' },
+    { image: 'images/svc-waxing.jpg', alt: 'Hygienic Organic Waxing Service' },
+    { image: 'images/svc-body.jpg', alt: 'Luxury Full Body Polishing Treatment' }
+  ];
+
+  document.getElementById("galleryHeader").innerHTML = headerHTML(
+    "Visual Showcase",
+    "Experience The",
+    "Glow Effect",
+    "A visual walk through our premium skincare results and advanced aesthetic procedures."
+  );
+
+  const container = document.getElementById("galleryContainer");
+  container.innerHTML = `<div id="depthCarousel" style="height:100%;width:100%;"></div>`;
+  
+  const carouselEl = document.getElementById("depthCarousel");
+  new VanillaDepthCarousel(carouselEl, {
+    items: images,
+    depth: 220,
+    spread: 90,
+    tilt: 22,
+    tiltDirection: "right",
+    perspective: 1400,
+    visibleCards: 4,
+    falloff: 0.2,
+    blur: 6,
+    autoplay: true,
+    autoplayDelay: 3200,
+    loop: true
+  });
+}
+
 /* ── RENDER: APPOINTMENT ──────────────────────────────── */
 function renderAppointment() {
   const a = D.appointment;
@@ -493,6 +886,7 @@ function renderAll() {
   renderAcademy();
   renderDoctor();
   renderTestimonials();
+  renderGallery();
   renderAppointment();
   renderContact();
   renderFooter();
