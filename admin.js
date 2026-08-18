@@ -1357,6 +1357,17 @@ function renderGalleryTab(panel) {
   panel.innerHTML = `
     ${getSectionHeader("Showcase Gallery Settings", "Add, edit, or delete items and images shown in the animated showcase gallery.")}
     
+    <div class="toggle-group">
+      <div class="toggle-label">
+        <strong>Enable Gallery Section</strong>
+        <span>Show or hide the showcase gallery grid on the homepage.</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="galleryToggleCheck" ${g.enabled !== false ? 'checked' : ''} onchange="activeData.gallery.enabled = this.checked">
+        <span class="slider"></span>
+      </label>
+    </div>
+    
     <div class="form-section-card">
       <div class="form-section-title">Gallery Headers</div>
       <div class="form-row-3">

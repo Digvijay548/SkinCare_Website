@@ -275,7 +275,13 @@ function renderDoctor() {
 /* ── RENDER: GALLERY / SHOWCASE ───────────────────────── */
 function renderGallery() {
   const g = D.gallery;
-  if (!g) return;
+  const secEl = document.getElementById("gallery");
+  if (!g || g.enabled === false) {
+    if (secEl) secEl.style.display = "none";
+    return;
+  } else {
+    if (secEl) secEl.style.display = "";
+  }
   
   // Render headers
   document.getElementById("galleryHeader").innerHTML = headerHTML(g.eyebrow, g.title, g.titleAccent, g.subtitle);
