@@ -1048,3 +1048,20 @@ function isValidPhone(phone) {
     console.error("Error rendering content:", renderErr);
   }
 })();
+
+// Real-time Preview synchronization receiver from Admin panel
+window.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "UPDATE_PREVIEW_DATA") {
+    D = event.data.data;
+    console.log("Real-time preview config updated from admin editor!");
+    try {
+      renderAll();
+      // Re-initialize slider timers if needed
+      if (D.hero && D.hero.slides && Array.isArray(D.hero.slides) && D.hero.slides.length > 0) {
+        startHeroSlider(D.hero.slides);
+      }
+    } catch(err) {
+      console.error("Failed to render preview update:", err);
+    }
+  }
+});

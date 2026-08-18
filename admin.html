@@ -70,10 +70,17 @@
         </div>
       </div>
       <div class="db-header-actions">
+        <div style="display:flex; align-items:center; gap:8px; margin-right:12px;">
+          <span style="font-size:12px; font-weight:700; color:var(--color-muted-foreground); text-transform:uppercase; letter-spacing:0.5px;">Live Preview</span>
+          <label class="switch" style="transform: scale(0.8)">
+            <input type="checkbox" id="livePreviewToggle" checked onchange="toggleLivePreview(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
         <a href="index.html" target="_blank" class="btn btn-outline btn-sm">👁️ View Site</a>
-        <button class="btn btn-primary btn-sm" id="migrateImagesBtn" onclick="migrateAllLocalImages()">📤 Migrate Images</button>
-        <button class="btn btn-danger btn-sm" id="logoutBtn">Logout</button>
-        <button class="btn btn-success btn-md" id="saveAllBtn">💾 Save Changes</button>
+        <button class="btn btn-outline btn-sm" id="migrateImagesBtn" onclick="migrateAllLocalImages()">📤 Migrate Images</button>
+        <button class="btn btn-primary btn-sm" id="saveAllBtn">💾 Save Changes</button>
+        <button class="btn btn-danger btn-sm" id="logoutBtn">🚪 Logout</button>
       </div>
     </header>
 
@@ -98,21 +105,42 @@
         </ul>
       </aside>
 
-      <!-- Right Tab Contents -->
-      <main class="db-main-content">
-        <div class="tab-panel active" id="panel-site-info"></div>
-        <div class="tab-panel" id="panel-social-map"></div>
-        <div class="tab-panel" id="panel-hero"></div>
-        <div class="tab-panel" id="panel-about"></div>
-        <div class="tab-panel" id="panel-services"></div>
-        <div class="tab-panel" id="panel-why-us"></div>
-        <div class="tab-panel" id="panel-academy"></div>
-        <div class="tab-panel" id="panel-doctor"></div>
-        <div class="tab-panel" id="panel-testimonials"></div>
-        <div class="tab-panel" id="panel-gallery"></div>
-        <div class="tab-panel" id="panel-experience"></div>
-        <div class="tab-panel" id="panel-json-editor"></div>
-      </main>
+      <!-- Split Wrapper -->
+      <div class="db-content-split">
+        <main class="db-main-content">
+          <div class="tab-panel active" id="panel-site-info"></div>
+          <div class="tab-panel" id="panel-social-map"></div>
+          <div class="tab-panel" id="panel-hero"></div>
+          <div class="tab-panel" id="panel-about"></div>
+          <div class="tab-panel" id="panel-services"></div>
+          <div class="tab-panel" id="panel-why-us"></div>
+          <div class="tab-panel" id="panel-academy"></div>
+          <div class="tab-panel" id="panel-doctor"></div>
+          <div class="tab-panel" id="panel-testimonials"></div>
+          <div class="tab-panel" id="panel-gallery"></div>
+          <div class="tab-panel" id="panel-experience"></div>
+          <div class="tab-panel" id="panel-json-editor"></div>
+        </main>
+        
+        <!-- Live Preview Panel -->
+        <section class="db-preview-panel">
+          <div class="preview-header">
+            <div class="preview-title">🖥️ Real-time Preview</div>
+            <div class="preview-controls">
+              <button type="button" class="preview-btn" onclick="previewMobile()" title="Mobile view">📱</button>
+              <button type="button" class="preview-btn" onclick="previewDesktop()" title="Desktop view">💻</button>
+              <button type="button" class="preview-btn" onclick="previewZoomOut()" title="Zoom Out">➖</button>
+              <span id="previewZoomVal" style="color:var(--color-muted-foreground);font-size:12px;font-weight:600;min-width:36px;text-align:center;">100%</span>
+              <button type="button" class="preview-btn" onclick="previewZoomIn()" title="Zoom In">➕</button>
+              <button type="button" class="preview-btn" onclick="refreshPreview()" title="Refresh site">🔄</button>
+              <a href="index.html" target="_blank" class="preview-btn" title="Open in new tab" style="text-decoration:none;">🔗</a>
+            </div>
+          </div>
+          <div class="preview-iframe-wrapper">
+            <iframe id="previewIframe" src="index.html"></iframe>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 

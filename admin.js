@@ -1739,3 +1739,100 @@ window.addHeroSlide = function() {
     if (cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
   }, 100);
 };
+
+// ── REALTIME PREVIEW FUNCTIONS ──────────────────────────
+let previewZoom = 1;
+
+window.refreshPreview = function() {
+  const iframe = document.getElementById("previewIframe");
+  if (iframe) {
+    iframe.src = iframe.src;
+  }
+};
+
+window.previewMobile = function() {
+  const iframe = document.getElementById("previewIframe");
+  if (iframe) {
+    iframe.style.width = "375px";
+    iframe.style.height = "667px";
+    iframe.style.borderRadius = "24px";
+    iframe.style.border = "12px solid #334155";
+  }
+};
+
+window.previewDesktop = function() {
+  const iframe = document.getElementById("previewIframe");
+  if (iframe) {
+    previewMobileMode = false;
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.borderRadius = "8px";
+    iframe.style.border = "none";
+  }
+};
+
+window.previewZoomIn = function() {
+  if (previewZoom < 1.5) {
+    previewZoom = parseFloat((previewZoom + 0.1).toFixed(1));
+    updatePreviewZoom();
+  }
+};
+
+window.previewZoomOut = function() {
+  if (previewZoom > 0.5) {
+    previewZoom = parseFloat((previewZoom - 0.1).toFixed(1));
+    updatePreviewZoom();
+  }
+};
+
+function updatePreviewZoom() {
+  const iframe = document.getElementById("previewIframe");
+  const zoomText = document.getElementById("previewZoomVal");
+  if (iframe) {
+    iframe.style.transform = `scale(${previewZoom})`;
+  }
+  if (zoomText) {
+    zoomText.textContent = `${Math.round(previewZoom * 100)}%`;
+  }
+}
+
+let isPreviewEnabled = true;
+
+window.toggleLivePreview = function(enabled) {
+  isPreviewEnabled = enabled;
+  const splitWrapper = document.querySelector(".db-content-split");
+  if (splitWrapper) {
+    if (enabled) {
+      splitWrapper.classList.remove("preview-disabled");
+      sendDataToPreview();
+    } else {
+      splitWrapper.classList.add("preview-disabled");
+    }
+  }
+};
+
+// Post current activeData config to iframe preview
+function sendDataToPreview() {
+  if (!isPreviewEnabled) return;
+  const iframe = document.getElementById("previewIframe");
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({
+      type: "UPDATE_PREVIEW_DATA",
+      data: activeData
+    }, "*");
+  }
+}
+
+// Event listeners to sync data on edits
+document.addEventListener("input", sendDataToPreview);
+document.addEventListener("change", sendDataToPreview);
+
+// Send initial load data when iframe finishes loading
+document.addEventListener("DOMContentLoaded", () => {
+  const iframe = document.getElementById("previewIframe");
+  if (iframe) {
+    iframe.addEventListener("load", () => {
+      if (activeData) sendDataToPreview();
+    });
+  }
+});
