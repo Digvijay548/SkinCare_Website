@@ -24,7 +24,7 @@ function showToast(message, type = "info", duration = 4000) {
 
   setTimeout(() => {
     toast.style.opacity = "0";
-    toast.style.transform = "translateX(50px)";
+    toast.style.transform = window.innerWidth <= 768 ? "translateY(-16px) scale(0.95)" : "translateX(50px)";
     toast.style.transition = "all 0.3s ease";
     setTimeout(() => toast.remove(), 300);
   }, duration);
