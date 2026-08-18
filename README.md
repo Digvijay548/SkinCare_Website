@@ -147,3 +147,31 @@ window.SUPABASE_CONFIG = {
 3. Once logged in, click the blue **📤 Migrate Images** button in the top right header.
 4. The system will automatically fetch all local assets, upload them to your Supabase Storage bucket, map the URLs, and update the database configuration. You are now 100% serverless!
 
+---
+
+## 💎 Advanced Features & Admin Capabilities
+
+We have expanded the client homepage and admin dashboard with state-of-the-art serverless capabilities:
+
+### 1. Real-time Live Preview Editor
+*   **Dual View Layout**: The admin dashboard features a side-by-side editing panel and interactive live website preview.
+*   **Visual Controls**: Switch the viewport to **Mobile (📱)** or **Desktop (💻)**, and use the **Zoom (➕/➖)** keys to adjust scale.
+*   **Live Synchronization**: Any text you type, switch you toggle, or image you upload dynamically pushes configurations to the live preview frame using high-performance `postMessage` synchronization without refreshing the browser or hitting save database limits.
+*   **Live Preview Toggle**: Toggle the review visibility switch OFF in the header to expand the form workspace to full-screen width.
+
+### 2. Animated Background Hero Slideshow
+*   **Dynamic Slideshow**: Multiple slides can be added, updated, or removed in the **Hero Section Settings** tab.
+*   **Individual Slide Titles**: Customize different Main and Accent (rose colored) titles per slide. 
+*   **Crossfade Effect**: Background images crossfade every 5.5 seconds, while slide titles slide out, update text, and slide back in sync with the slide rotation.
+
+### 3. Glassmorphic Dropdown Navigation (Mobile)
+*   The responsive mobile menu overlay has been redesigned with a premium transparent frosted-glass panel (`background: rgba(26, 10, 46, 0.65)` and `backdrop-filter: blur(20px)`), sliding down elegantly from the header bar instead of blocking the screen in plain white block cards.
+
+### 4. Dynamic Maps & Social Media Profiles
+*   **Dedicated Social & Map Tab**: Manage links and toggle visibility for Instagram, Facebook, and WhatsApp shortcuts.
+*   **Flexible Maps**: Paste complex `iframe` embed codes OR simple maps share links (`https://maps.app.goo.gl/xxx`). If a simple link is pasted, the client homepage automatically displays a luxury location card containing instructions, a floating pin, and a button linking to Google Maps.
+
+### 5. Automatic Supabase File & Storage Cleanup
+*   **Physical Deletions**: Deleting database cards (Services, Academy Courses, Testimonials, Gallery Showcase items) physically deletes their uploaded assets from your Supabase Storage bucket.
+*   **Replacing Images**: Uploading a new image or clicking the red **Remove Image** button immediately frees up space by cleaning old files from Supabase Storage.
+
