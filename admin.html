@@ -73,7 +73,7 @@
         <div style="display:flex; align-items:center; gap:8px; margin-right:12px;">
           <span style="font-size:12px; font-weight:700; color:var(--color-muted-foreground); text-transform:uppercase; letter-spacing:0.5px;">Live Preview</span>
           <label class="switch" style="transform: scale(0.8)">
-            <input type="checkbox" id="livePreviewToggle" checked onchange="toggleLivePreview(this.checked)">
+            <input type="checkbox" id="livePreviewToggle" onchange="toggleLivePreview(this.checked)">
             <span class="slider"></span>
           </label>
         </div>
@@ -106,7 +106,7 @@
       </aside>
 
       <!-- Split Wrapper -->
-      <div class="db-content-split">
+      <div class="db-content-split preview-disabled">
         <main class="db-main-content">
           <div class="tab-panel active" id="panel-site-info"></div>
           <div class="tab-panel" id="panel-social-map"></div>

@@ -1042,6 +1042,13 @@ function isValidPhone(phone) {
   }
 
   try {
+    if (D.site.themeEnabled) {
+      applyCustomThemeStyles(D.site.customTheme);
+      document.body.className = "theme-" + (D.site.theme || "default");
+    } else {
+      applyCustomThemeStyles(null);
+      document.body.className = "theme-default";
+    }
     renderAll();
     initBehaviours();
   } catch (renderErr) {
@@ -1055,6 +1062,13 @@ window.addEventListener("message", (event) => {
     D = event.data.data;
     console.log("Real-time preview config updated from admin editor!");
     try {
+      if (D.site.themeEnabled) {
+        applyCustomThemeStyles(D.site.customTheme);
+        document.body.className = "theme-" + (D.site.theme || "default");
+      } else {
+        applyCustomThemeStyles(null);
+        document.body.className = "theme-default";
+      }
       renderAll();
       // Re-initialize slider timers if needed
       if (D.hero && D.hero.slides && Array.isArray(D.hero.slides) && D.hero.slides.length > 0) {
@@ -1065,3 +1079,48 @@ window.addEventListener("message", (event) => {
     }
   }
 });
+
+// Dynamic custom theme override styles helper
+function applyCustomThemeStyles(themeObj) {
+  let styleEl = document.getElementById("custom-theme-style");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "custom-theme-style";
+    document.head.appendChild(styleEl);
+  }
+  
+  if (themeObj && (D.site.theme === 'custom') && D.site.themeEnabled) {
+    const bg = themeObj.background || "#1a0a2e";
+    const acc = themeObj.accent || "#EC4899";
+    const accHover = themeObj.accentHover || "#DB2777";
+    
+    const hexToRgb = (hex) => {
+      const bigint = parseInt(hex.replace("#", ""), 16);
+      if (isNaN(bigint)) return "236, 72, 153"; // fallback pink
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r}, ${g}, ${b}`;
+    };
+    
+    const bgRgb = hexToRgb(bg);
+    const accRgb = hexToRgb(acc);
+    
+    styleEl.innerHTML = `
+      body.theme-custom {
+        --plum: ${bg};
+        --plum-rgb: ${bgRgb};
+        --rose: ${acc};
+        --rose-rgb: ${accRgb};
+        --rose2: ${accHover};
+        --purple: ${acc};
+        --ring-rgb: ${accRgb};
+        --blush: rgba(${accRgb}, 0.08);
+        --border: rgba(${accRgb}, 0.2);
+        --text: ${acc};
+      }
+    `;
+  } else {
+    styleEl.innerHTML = "";
+  }
+}

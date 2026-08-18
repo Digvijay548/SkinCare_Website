@@ -169,6 +169,36 @@ async function fetchConfig() {
       showToast("Database successfully initialized with default data!", "success");
     }
     
+    // Safety check for customTheme configuration
+    if (!activeData.site.customTheme) {
+      activeData.site.customTheme = {
+        background: "#1a0a2e",
+        accent: "#EC4899",
+        accentHover: "#DB2777"
+      };
+    }
+    // Set initial admin body theme based on configuration toggle
+    if (activeData.site.themeEnabled) {
+      applyCustomThemeStyles(activeData.site.customTheme);
+      document.body.className = "admin-body theme-" + (activeData.site.theme || "default");
+    } else {
+      applyCustomThemeStyles(null);
+      document.body.className = "admin-body theme-default";
+    }
+
+    // Set initial live preview layout preference (by default OFF)
+    const previewToggle = document.getElementById("livePreviewToggle");
+    const splitWrapper = document.querySelector(".db-content-split");
+    if (activeData.site.previewEnabled === true) {
+      isPreviewEnabled = true;
+      if (previewToggle) previewToggle.checked = true;
+      if (splitWrapper) splitWrapper.classList.remove("preview-disabled");
+    } else {
+      isPreviewEnabled = false;
+      if (previewToggle) previewToggle.checked = false;
+      if (splitWrapper) splitWrapper.classList.add("preview-disabled");
+    }
+
     renderCurrentTab();
   } catch(err) {
     console.error("Config fetch error:", err);
@@ -182,7 +212,15 @@ let currentTab = "site-info";
 function initTabs() {
   const items = document.querySelectorAll(".tab-item");
   items.forEach(item => {
-    item.addEventListener("click", () => {
+    item.addEventListener("click", async () => {
+      // Clear any pending debounced auto-saves
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+      
+      // Save changes before leaving the current tab
+      if (supabaseClient && activeData) {
+        await saveChanges();
+      }
+      
       items.forEach(i => i.classList.remove("active"));
       item.classList.add("active");
       
@@ -427,6 +465,109 @@ function renderSiteInfo(panel) {
           <input type="text" value="${val(activeData.site.tagline)}" oninput="activeData.site.tagline = this.value">
         </div>
       </div>
+    </div>
+
+    <div class="form-section-card">
+      <div class="form-section-title" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+        <span>Brand Identity & Color Theme</span>
+        <label class="switch" style="transform: scale(0.8); margin: 0;">
+          <input type="checkbox" id="themeEnabledToggle" ${activeData.site.themeEnabled ? 'checked' : ''} onchange="toggleThemeCustomization(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p style="font-size: 12px; color: var(--color-muted-foreground); margin-bottom: 16px;">
+        Toggle ON to enable branding theme presets or create your own custom theme. Toggle OFF to run on the default skincare theme.
+      </p>
+      
+      ${activeData.site.themeEnabled ? `
+        <div class="theme-swatch-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; animation: fadeIn 0.3s ease;">
+          
+          <!-- Default theme -->
+          <div class="theme-swatch-card ${activeData.site.theme === 'default' || !activeData.site.theme ? 'active' : ''}" onclick="selectColorTheme('default')">
+            <div class="swatch-preview" style="background:#090b11;">
+              <span style="background:#EC4899;"></span>
+              <span style="background:#1a0a2e;"></span>
+            </div>
+            <div class="swatch-label">Plum Blossom (Default)</div>
+          </div>
+
+          <!-- Royal Gold theme -->
+          <div class="theme-swatch-card ${activeData.site.theme === 'royal' ? 'active' : ''}" onclick="selectColorTheme('royal')">
+            <div class="swatch-preview" style="background:#050a12;">
+              <span style="background:#F59E0B;"></span>
+              <span style="background:#0F1E36;"></span>
+            </div>
+            <div class="swatch-label">Royal Sapphire</div>
+          </div>
+
+          <!-- Emerald Forest theme -->
+          <div class="theme-swatch-card ${activeData.site.theme === 'emerald' ? 'active' : ''}" onclick="selectColorTheme('emerald')">
+            <div class="swatch-preview" style="background:#020908;">
+              <span style="background:#10B981;"></span>
+              <span style="background:#064E3B;"></span>
+            </div>
+            <div class="swatch-label">Emerald Garden</div>
+          </div>
+
+          <!-- Sunset Glow theme -->
+          <div class="theme-swatch-card ${activeData.site.theme === 'sunset' ? 'active' : ''}" onclick="selectColorTheme('sunset')">
+            <div class="swatch-preview" style="background:#0c0301;">
+              <span style="background:#F97316;"></span>
+              <span style="background:#431407;"></span>
+            </div>
+            <div class="swatch-label">Sunset Glow</div>
+          </div>
+
+          <!-- Midnight Ocean theme -->
+          <div class="theme-swatch-card ${activeData.site.theme === 'ocean' ? 'active' : ''}" onclick="selectColorTheme('ocean')">
+            <div class="swatch-preview" style="background:#01080a;">
+              <span style="background:#22D3EE;"></span>
+              <span style="background:#0F373E;"></span>
+            </div>
+            <div class="swatch-label">Midnight Ocean</div>
+          </div>
+
+          <!-- Custom Theme -->
+          <div class="theme-swatch-card ${activeData.site.theme === 'custom' ? 'active' : ''}" onclick="selectColorTheme('custom')">
+            <div class="swatch-preview" style="background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border:1px dashed rgba(255,255,255,0.15)">
+              <span style="background:linear-gradient(135deg, #f472b6 0%, #3b82f6 100%);"></span>
+              <span style="background:linear-gradient(135deg, #3b82f6 0%, #10b981 100%);"></span>
+            </div>
+            <div class="swatch-label">🎨 Custom Theme</div>
+          </div>
+
+        </div>
+
+        <!-- Custom Theme Builder Color Pickers -->
+        ${activeData.site.theme === 'custom' ? `
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border); animation: fadeIn 0.3s ease;">
+            <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--color-foreground)">🎨 Configure Custom Colors</h4>
+            <div class="form-row-3">
+              <div class="form-group" style="margin: 0">
+                <label>Background Color</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <input type="color" value="${activeData.site.customTheme?.background || '#1a0a2e'}" oninput="updateCustomThemeColor('background', this.value)" style="width:40px; height:40px; padding:0; border:1px solid var(--color-border); border-radius:6px; cursor:pointer;">
+                  <input type="text" value="${activeData.site.customTheme?.background || '#1a0a2e'}" oninput="updateCustomThemeColor('background', this.value)" style="flex:1;">
+                </div>
+              </div>
+              <div class="form-group" style="margin: 0">
+                <label>Accent Primary</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <input type="color" value="${activeData.site.customTheme?.accent || '#EC4899'}" oninput="updateCustomThemeColor('accent', this.value)" style="width:40px; height:40px; padding:0; border:1px solid var(--color-border); border-radius:6px; cursor:pointer;">
+                  <input type="text" value="${activeData.site.customTheme?.accent || '#EC4899'}" oninput="updateCustomThemeColor('accent', this.value)" style="flex:1;">
+                </div>
+              </div>
+              <div class="form-group" style="margin: 0">
+                <label>Accent Hover / Secondary</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <input type="color" value="${activeData.site.customTheme?.accentHover || '#DB2777'}" oninput="updateCustomThemeColor('accentHover', this.value)" style="width:40px; height:40px; padding:0; border:1px solid var(--color-border); border-radius:6px; cursor:pointer;">
+                  <input type="text" value="${activeData.site.customTheme?.accentHover || '#DB2777'}" oninput="updateCustomThemeColor('accentHover', this.value)" style="flex:1;">
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+      ` : ''}
     </div>
 
     <div class="form-section-card">
@@ -1380,16 +1521,24 @@ window.resetJsonToDefault = async function() {
 };
 
 // ── SAVE CHANGES TO DATABASE ────────────────────────────
+let isSaving = false;
 async function saveChanges() {
   if (!supabaseClient || !activeData) {
     showToast("Cannot save. Database connection not configured or data not loaded.", "error");
     return;
   }
 
+  if (isSaving) {
+    console.log("Save already in progress, skipping duplicate save invocation.");
+    return;
+  }
+
+  isSaving = true;
   const btn = document.getElementById("saveAllBtn");
-  const originalText = btn.innerHTML;
-  btn.innerHTML = "⏳ Saving...";
-  btn.disabled = true;
+  if (btn) {
+    btn.innerHTML = "⏳ Saving...";
+    btn.disabled = true;
+  }
 
   try {
     const { error } = await supabaseClient
@@ -1407,8 +1556,11 @@ async function saveChanges() {
     console.error("Save error:", err);
     showToast("Failed to save changes: " + err.message, "error");
   } finally {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
+    isSaving = false;
+    if (btn) {
+      btn.innerHTML = "💾 Save Changes";
+      btn.disabled = false;
+    }
   }
 }
 
@@ -1796,10 +1948,14 @@ function updatePreviewZoom() {
   }
 }
 
-let isPreviewEnabled = true;
+let isPreviewEnabled = false;
 
-window.toggleLivePreview = function(enabled) {
+window.toggleLivePreview = async function(enabled) {
   isPreviewEnabled = enabled;
+  if (activeData && activeData.site) {
+    activeData.site.previewEnabled = enabled;
+  }
+  
   const splitWrapper = document.querySelector(".db-content-split");
   if (splitWrapper) {
     if (enabled) {
@@ -1808,6 +1964,11 @@ window.toggleLivePreview = function(enabled) {
     } else {
       splitWrapper.classList.add("preview-disabled");
     }
+  }
+  
+  // Save preview toggle state immediately to Supabase
+  if (supabaseClient && activeData) {
+    await saveChanges();
   }
 };
 
@@ -1823,9 +1984,29 @@ function sendDataToPreview() {
   }
 }
 
+let autoSaveTimeout = null;
+function triggerAutoSave() {
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(async () => {
+    if (supabaseClient && activeData) {
+      console.log("Debounced auto-save triggered.");
+      await saveChanges();
+    }
+  }, 1200);
+}
+
 // Event listeners to sync data on edits
-document.addEventListener("input", sendDataToPreview);
-document.addEventListener("change", sendDataToPreview);
+document.addEventListener("input", () => {
+  sendDataToPreview();
+  triggerAutoSave();
+});
+document.addEventListener("change", async () => {
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  sendDataToPreview();
+  if (supabaseClient && activeData) {
+    await saveChanges();
+  }
+});
 
 // Send initial load data when iframe finishes loading
 document.addEventListener("DOMContentLoaded", () => {
@@ -1836,3 +2017,115 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// Select and apply color themes
+window.selectColorTheme = async function(themeName) {
+  activeData.site.theme = themeName;
+  
+  if (themeName === 'custom' && !activeData.site.customTheme) {
+    activeData.site.customTheme = {
+      background: "#1a0a2e",
+      accent: "#EC4899",
+      accentHover: "#DB2777"
+    };
+  }
+  
+  if (activeData.site.themeEnabled) {
+    applyCustomThemeStyles(activeData.site.customTheme);
+    document.body.className = "admin-body theme-" + themeName;
+  } else {
+    applyCustomThemeStyles(null);
+    document.body.className = "admin-body theme-default";
+  }
+  await saveChanges();
+  renderCurrentTab();
+  sendDataToPreview();
+};
+
+// Dynamic custom theme override styles helper
+function applyCustomThemeStyles(themeObj) {
+  let styleEl = document.getElementById("custom-theme-style");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "custom-theme-style";
+    document.head.appendChild(styleEl);
+  }
+  
+  if (themeObj && (activeData.site.theme === 'custom') && activeData.site.themeEnabled) {
+    const bg = themeObj.background || "#1a0a2e";
+    const acc = themeObj.accent || "#EC4899";
+    const accHover = themeObj.accentHover || "#DB2777";
+    
+    const hexToRgb = (hex) => {
+      const bigint = parseInt(hex.replace("#", ""), 16);
+      if (isNaN(bigint)) return "236, 72, 153"; // fallback pink
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r}, ${g}, ${b}`;
+    };
+    
+    const bgRgb = hexToRgb(bg);
+    const accRgb = hexToRgb(acc);
+    
+    styleEl.innerHTML = `
+      body.theme-custom {
+        --plum: ${bg};
+        --plum-rgb: ${bgRgb};
+        --rose: ${acc};
+        --rose-rgb: ${accRgb};
+        --rose2: ${accHover};
+        --purple: ${acc};
+        --ring-rgb: ${accRgb};
+        --blush: rgba(${accRgb}, 0.08);
+        --border: rgba(${accRgb}, 0.2);
+        --text: ${acc};
+      }
+      body.admin-body.theme-custom {
+        --color-primary: ${bg};
+        --color-ring: ${acc};
+        --color-background: ${bg};
+        --color-card: rgba(255, 255, 255, 0.02);
+        --color-border: rgba(255, 255, 255, 0.08);
+      }
+    `;
+  } else {
+    styleEl.innerHTML = "";
+  }
+}
+
+// Enable/Disable theme customization globally
+window.toggleThemeCustomization = async function(enabled) {
+  activeData.site.themeEnabled = enabled;
+  
+  if (enabled) {
+    applyCustomThemeStyles(activeData.site.customTheme);
+    document.body.className = "admin-body theme-" + (activeData.site.theme || "default");
+  } else {
+    applyCustomThemeStyles(null);
+    document.body.className = "admin-body theme-default";
+  }
+  
+  await saveChanges();
+  renderCurrentTab();
+  sendDataToPreview();
+};
+
+// Live-update specific custom theme hex code or color picker
+window.updateCustomThemeColor = function(key, value) {
+  if (!activeData.site.customTheme) {
+    activeData.site.customTheme = { background: "#1a0a2e", accent: "#EC4899", accentHover: "#DB2777" };
+  }
+  activeData.site.customTheme[key] = value;
+  
+  // Re-apply styles instantly
+  applyCustomThemeStyles(activeData.site.customTheme);
+  
+  // Dynamic element updates to avoid reset input focus
+  const textInput = document.querySelector(`input[oninput="updateCustomThemeColor('${key}', this.value)"][type="text"]`);
+  const colorInput = document.querySelector(`input[oninput="updateCustomThemeColor('${key}', this.value)"][type="color"]`);
+  if (textInput) textInput.value = value;
+  if (colorInput) colorInput.value = value;
+  
+  sendDataToPreview();
+};

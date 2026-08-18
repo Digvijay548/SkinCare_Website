@@ -21,7 +21,36 @@
   --color-border: rgba(255, 255, 255, 0.08);
   --color-destructive: #EF4444;
   --color-ring: #C084FC;
-  
+}
+
+/* Theme variables overrides for Admin Panel */
+body.admin-body.theme-default {
+  --color-primary: #1E293B;
+  --color-ring: #C084FC;
+  --color-background: #090b11;
+}
+body.admin-body.theme-royal {
+  --color-primary: #0F1E36;
+  --color-ring: #F59E0B;
+  --color-background: #050a12;
+}
+body.admin-body.theme-emerald {
+  --color-primary: #064E3B;
+  --color-ring: #10B981;
+  --color-background: #020908;
+}
+body.admin-body.theme-sunset {
+  --color-primary: #431407;
+  --color-ring: #FB923C;
+  --color-background: #0c0301;
+}
+body.admin-body.theme-ocean {
+  --color-primary: #0F373E;
+  --color-ring: #22D3EE;
+  --color-background: #01080a;
+}
+
+:root {
   --font-sans: 'Fira Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: 'Fira Code', monospace;
   
@@ -766,4 +795,45 @@ input:checked + .slider:before {
     min-height: 450px;
     height: 450px;
   }
+}
+
+/* Theme Swatch Selector Card */
+.theme-swatch-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+.theme-swatch-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.theme-swatch-card.active {
+  border-color: var(--color-ring);
+  background: rgba(192, 132, 252, 0.08);
+  box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
+}
+.swatch-preview {
+  height: 50px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.swatch-preview span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.swatch-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-foreground);
 }
