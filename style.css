@@ -432,6 +432,7 @@ input, select, textarea { font-family: var(--font-body); font-size: 15px; }
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   animation: accentShimmer 5s linear 2s infinite;
   display: inline-block; border-right: 3px solid var(--rose);
+  padding-bottom: 0.15em; margin-bottom: -0.15em; line-height: 1.2;
 }
 @keyframes accentShimmer { 0% { background-position:0% 0%; } 50% { background-position:150% 0%; } 100% { background-position:0% 0%; } }
 
