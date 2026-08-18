@@ -4,6 +4,11 @@
    ═══════════════════════════════════════════════════════ */
 
 let D = null;
+let isAcademyEnabled = false;
+
+function updateAcademyFlag() {
+  isAcademyEnabled = D && D.academic && D.academic.enabled !== false;
+}
 
 /* ── HELPERS ──────────────────────────────────────────── */
 function esc(str) {
@@ -54,7 +59,7 @@ function renderHeader() {
       <span class="logo-sub">${esc(D.site.branch)}</span>
     </div>
   `;
-  const isAcademyEnabled = D.academic && D.academic.enabled !== false;
+  updateAcademyFlag();
   const filteredNav = D.nav.filter(n => isAcademyEnabled || n.href !== "#academic");
   document.getElementById("navList").innerHTML = filteredNav.map(n =>
     n.cta
@@ -579,7 +584,7 @@ function renderFooter() {
   const w = D.whatsapp;
   const wa = waHref();
 
-  const isAcademyEnabled = D.academic && D.academic.enabled !== false;
+  updateAcademyFlag();
   const filteredQuickLinks = f.quickLinks.filter(l => isAcademyEnabled || l.href !== "#academic");
 
   document.getElementById("footerInner").innerHTML = `
