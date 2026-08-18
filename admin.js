@@ -212,6 +212,9 @@ function renderCurrentTab() {
     case "site-info":
       renderSiteInfo(panel);
       break;
+    case "social-map":
+      renderSocialMapTab(panel);
+      break;
     case "hero":
       renderHeroTab(panel);
       break;
@@ -446,13 +449,9 @@ function renderSiteInfo(panel) {
         <label>WhatsApp Default Start Message</label>
         <input type="text" value="${val(activeData.whatsapp.message)}" oninput="activeData.whatsapp.message = this.value">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin: 0">
         <label>Physical Address</label>
         <textarea oninput="activeData.contact.address = this.value">${activeData.contact.address}</textarea>
-      </div>
-      <div class="form-group">
-        <label>Google Maps Embed URL</label>
-        <input type="text" value="${val(activeData.contact.mapEmbed)}" oninput="activeData.contact.mapEmbed = this.value">
       </div>
     </div>
 
@@ -479,6 +478,24 @@ function renderSiteInfo(panel) {
           <label>Credit Text</label>
           <input type="text" value="${val(activeData.site.credit)}" oninput="activeData.site.credit = this.value">
         </div>
+      </div>
+    </div>
+  `;
+}
+
+// 🌐 SOCIAL & MAP TAB
+function renderSocialMapTab(panel) {
+  panel.innerHTML = `
+    ${getSectionHeader("Social Links & Google Map", "Configure your business page links, toggle footer icons, and set your Google Map share URL.")}
+    
+    <div class="form-section-card">
+      <div class="form-section-title">Google Map Settings</div>
+      <div class="form-group" style="margin: 0">
+        <label>Google Maps Link (Embed URL or Share Link)</label>
+        <input type="text" value="${val(activeData.contact.mapEmbed)}" oninput="activeData.contact.mapEmbed = this.value" placeholder="e.g., https://maps.app.goo.gl/xxx or https://www.google.com/maps/embed?pb=...">
+        <p style="font-size: 12px; color: var(--muted); margin-top: 6px;">
+          💡 <strong>Supports both</strong>: You can paste a simple share link (e.g. <code>https://maps.app.goo.gl/xxx</code>) or a full HTML embed source link.
+        </p>
       </div>
     </div>
 

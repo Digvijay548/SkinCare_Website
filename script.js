@@ -487,7 +487,20 @@ function renderContact() {
       <a href="${waHref()}" target="_blank" class="btn btn-whatsapp contact-wa">${waSvg(18)} ${esc(c.waButton)}</a>
     </div>
     <div class="map-wrap">
-      <iframe src="${esc(D.contact.mapEmbed)}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      ${D.contact.mapEmbed && D.contact.mapEmbed.includes("/embed") ? `
+        <iframe src="${esc(D.contact.mapEmbed)}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      ` : `
+        <div class="simple-map-card">
+          <div class="map-card-icon">📍</div>
+          <h4>Our Clinic Location</h4>
+          <p class="map-card-address">${esc(D.contact.address)}</p>
+          <p class="map-card-desc">Click the button below to view the interactive map and get directions on Google Maps.</p>
+          <a href="${esc(D.contact.mapEmbed || '#')}" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Open in Google Maps
+          </a>
+        </div>
+      `}
     </div>
   `;
 }

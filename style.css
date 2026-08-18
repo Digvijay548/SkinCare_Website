@@ -1068,3 +1068,49 @@ textarea:focus-visible {
   letter-spacing: 0.5px;
 }
 
+/* Simple Map Card Layout */
+.simple-map-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 30px;
+  background: rgba(26, 10, 46, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  height: 100%;
+  min-height: 380px;
+}
+.map-card-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: floatIcon 3s ease-in-out infinite;
+}
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.simple-map-card h4 {
+  font-family: 'Lora', serif;
+  font-size: 24px;
+  color: white;
+  margin-bottom: 12px;
+}
+.map-card-address {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 440px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.map-card-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 380px;
+  margin-bottom: 24px;
+}
+
