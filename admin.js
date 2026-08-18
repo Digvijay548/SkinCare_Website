@@ -1314,6 +1314,13 @@ function renderGalleryTab(panel) {
   if (!g.items) g.items = [];
   activeData.gallery = g;
 
+  let criteriaHTML = g.categories.filter(c => c !== "All").map((cat, idx) => `
+    <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+      <input type="text" value="${val(cat)}" onchange="updateCriteria(${idx}, this.value)" style="flex: 1; padding: 8px 12px; margin-bottom: 0;">
+      <button class="btn btn-danger btn-sm" onclick="deleteCriteria(${idx})">🗑️ Delete</button>
+    </div>
+  `).join("");
+
   let itemsHTML = g.items.map((item, i) => `
     <div class="item-card">
       <div class="item-card-header">
@@ -1370,10 +1377,10 @@ function renderGalleryTab(panel) {
 
     <div class="form-section-card">
       <div class="form-section-title">Showcase Criteria / Categories</div>
-      <div class="form-group" style="margin: 0">
-        <label>Criteria Tags (Comma separated, do NOT include 'All')</label>
-        <input type="text" value="${val(g.categories.filter(c => c !== "All").join(', '))}" oninput="activeData.gallery.categories = ['All', ...this.value.split(',').map(s=>s.trim()).filter(Boolean)]">
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+        ${criteriaHTML}
       </div>
+      <button class="btn btn-outline btn-sm" onclick="addCriteria()">➕ Add New Criteria</button>
     </div>
 
     <h3 style="font-size: 16px; margin-bottom: 12px; font-weight:600">Gallery Items</h3>
@@ -1409,4 +1416,61 @@ window.addGalleryItem = function() {
     const cards = document.querySelectorAll(".item-card");
     if(cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
   }, 100);
+};
+
+// Criteria managers
+window.updateCriteria = function(idx, value) {
+  const g = activeData.gallery;
+  const cats = g.categories.filter(c => c !== "All");
+  const oldVal = cats[idx];
+  const newVal = value.trim();
+  if (!newVal) return;
+  
+  cats[idx] = newVal;
+  g.categories = ["All", ...cats];
+  
+  // Update gallery items utilizing this category
+  if (g.items) {
+    g.items.forEach(item => {
+      if (item.category === oldVal) {
+        item.category = newVal;
+      }
+    });
+  }
+  
+  showToast("Criteria updated successfully.", "success");
+  renderCurrentTab();
+};
+
+window.deleteCriteria = function(idx) {
+  const g = activeData.gallery;
+  const cats = g.categories.filter(c => c !== "All");
+  const catToDelete = cats[idx];
+  
+  if (confirm(`Are you sure you want to delete the criteria "${catToDelete}"? This will map existing photos under this criteria to another category.`)) {
+    cats.splice(idx, 1);
+    g.categories = ["All", ...cats];
+    
+    const firstCat = cats[0] || "Treatments";
+    if (g.items) {
+      g.items.forEach(item => {
+        if (item.category === catToDelete) {
+          item.category = firstCat;
+        }
+      });
+    }
+    
+    showToast(`Criteria "${catToDelete}" removed.`, "info");
+    renderCurrentTab();
+  }
+};
+
+window.addCriteria = function() {
+  const g = activeData.gallery;
+  const cats = g.categories.filter(c => c !== "All");
+  cats.push("New Category");
+  g.categories = ["All", ...cats];
+  
+  showToast("Criteria added.", "success");
+  renderCurrentTab();
 };
