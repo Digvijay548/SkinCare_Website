@@ -86,6 +86,22 @@
     <div class="container doctor-inner" id="doctorInner"></div>
   </section>
 
+  <!-- ═══════════════════════════ GALLERY / SHOWCASE ═══════════════════════════ -->
+  <section class="section" id="gallery">
+    <div class="container">
+      <div class="section-header" id="galleryHeader"></div>
+      <div class="gallery-filters" id="galleryFilters"></div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+  </section>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox-modal" id="lightboxModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <span class="lightbox-close" id="lightboxClose" aria-label="Close Lightbox">&times;</span>
+    <img class="lightbox-content" id="lightboxImg" src="" alt="Zoomed view">
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+
   <!-- ═══════════════════════════ TESTIMONIALS ═══════════════════════════ -->
   <section class="section" id="testimonials">
     <div class="container">
@@ -124,6 +140,8 @@
     </div>
   </noscript>
 
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
 </html>

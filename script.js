@@ -272,6 +272,76 @@ function renderDoctor() {
   `;
 }
 
+/* ── RENDER: GALLERY / SHOWCASE ───────────────────────── */
+function renderGallery() {
+  const g = D.gallery;
+  if (!g) return;
+  
+  // Render headers
+  document.getElementById("galleryHeader").innerHTML = headerHTML(g.eyebrow, g.title, g.titleAccent, g.subtitle);
+  
+  // Render filters
+  const cats = g.categories || ["All"];
+  if (!cats.includes("All")) {
+    cats.unshift("All");
+  }
+  document.getElementById("galleryFilters").innerHTML = cats.map((cat, i) => `
+    <button class="gallery-filter-btn${i === 0 ? " active" : ""}" data-filter="${esc(cat)}">${esc(cat)}</button>
+  `).join("");
+  
+  // Render grid items
+  const items = g.items || [];
+  document.getElementById("galleryGrid").innerHTML = items.map((item, i) => `
+    <div class="gallery-item" data-cat="${esc(item.category)}" onclick="openLightbox(${i})">
+      <img src="${esc(item.image)}" alt="${esc(item.title)}" loading="lazy" />
+      <div class="gallery-item-overlay">
+        <span>${esc(item.category)}</span>
+        <h4>${esc(item.title)}</h4>
+      </div>
+    </div>
+  `).join("");
+  
+  // Wire up filters
+  const filterBtns = document.querySelectorAll(".gallery-filter-btn");
+  const galleryItems = document.querySelectorAll(".gallery-item");
+  
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      
+      const filterValue = btn.getAttribute("data-filter");
+      
+      galleryItems.forEach(item => {
+        const itemCat = item.getAttribute("data-cat");
+        if (filterValue === "All" || itemCat === filterValue) {
+          item.classList.remove("hidden");
+        } else {
+          item.classList.add("hidden");
+        }
+      });
+    });
+  });
+}
+
+// Lightbox controller
+window.openLightbox = function(index) {
+  const g = D.gallery;
+  if (!g || !g.items || !g.items[index]) return;
+  const item = g.items[index];
+  
+  const modal = document.getElementById("lightboxModal");
+  const img = document.getElementById("lightboxImg");
+  const caption = document.getElementById("lightboxCaption");
+  
+  if (!modal || !img || !caption) return;
+  
+  img.src = item.image;
+  caption.innerHTML = `<span style="color:#C084FC; font-weight:700">${esc(item.category)}</span> — <strong>${esc(item.title)}</strong>`;
+  modal.style.display = "block";
+  modal.setAttribute("aria-hidden", "false");
+};
+
 /* ── RENDER: TESTIMONIALS ─────────────────────────────── */
 function renderTestimonials() {
   const s = D.sections.testimonials;
@@ -492,6 +562,7 @@ function renderAll() {
   renderWhy();
   renderAcademy();
   renderDoctor();
+  renderGallery();
   renderTestimonials();
   renderAppointment();
   renderContact();
@@ -757,6 +828,28 @@ function initBehaviours() {
     inp.addEventListener("blur",  () => inp.parentElement.classList.remove("field-focused"));
   });
 
+  /* ── LIGHTBOX MODAL EVENTS ── */
+  const lbModal = document.getElementById("lightboxModal");
+  const lbClose = document.getElementById("lightboxClose");
+  if (lbModal && lbClose) {
+    lbClose.addEventListener("click", () => {
+      lbModal.style.display = "none";
+      lbModal.setAttribute("aria-hidden", "true");
+    });
+    lbModal.addEventListener("click", (e) => {
+      if (e.target === lbModal) {
+        lbModal.style.display = "none";
+        lbModal.setAttribute("aria-hidden", "true");
+      }
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && lbModal.style.display === "block") {
+        lbModal.style.display = "none";
+        lbModal.setAttribute("aria-hidden", "true");
+      }
+    });
+  }
+
   console.log(`%c✨ ${D.site.name} Loaded`, "color:#C084FC;font-size:14px;font-weight:bold");
 }
 
@@ -838,14 +931,46 @@ function isValidPhone(phone) {
 
 /* ── BOOT ─────────────────────────────────────────────── */
 (async function boot() {
+  let loadedFromSupabase = false;
   try {
-    const res = await fetch("data.json", { cache: "no-store" });
-    D = await res.json();
+    if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.anonKey && window.supabase) {
+      const { createClient } = window.supabase;
+      const client = createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+      const { data, error } = await client
+        .from("site_settings")
+        .select("content")
+        .eq("id", 1)
+        .maybeSingle();
+      
+      if (!error && data && data.content) {
+        D = data.content;
+        loadedFromSupabase = true;
+        console.log("Loaded configuration dynamically from Supabase database.");
+      } else if (error) {
+        console.warn("Supabase query error, falling back to local data.json:", error.message);
+      }
+    }
+  } catch(supabaseErr) {
+    console.warn("Failed to connect or load from Supabase, trying local fallback:", supabaseErr);
+  }
+
+  if (!loadedFromSupabase) {
+    try {
+      const res = await fetch("data.json", { cache: "no-store" });
+      D = await res.json();
+      console.log("Loaded configuration from local fallback data.json.");
+    } catch(err) {
+      console.error("Failed to load data.json", err);
+      document.body.insertAdjacentHTML("afterbegin",
+        `<div style="background:#7C3AED;color:#fff;padding:12px 24px;font-family:sans-serif;text-align:center;">Failed to load site data — check configurations and files.</div>`);
+      return;
+    }
+  }
+
+  try {
     renderAll();
     initBehaviours();
-  } catch(err) {
-    console.error("Failed to load data.json", err);
-    document.body.insertAdjacentHTML("afterbegin",
-      `<div style="background:#7C3AED;color:#fff;padding:12px 24px;font-family:sans-serif;text-align:center;">Failed to load data.json — check the file exists and is valid JSON.</div>`);
+  } catch (renderErr) {
+    console.error("Error rendering content:", renderErr);
   }
 })();

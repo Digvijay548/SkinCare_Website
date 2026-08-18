@@ -288,6 +288,20 @@
     "titleBranch": "Branch - Keshav nagar, Pune",
     "waButton": "Chat on WhatsApp"
   },
+  "gallery": {
+    "eyebrow": "Our Showcase",
+    "title": "Real Results, Real",
+    "titleAccent": "Glow",
+    "subtitle": "A glimpse of our signature treatments, cosmetology training, and client transformations.",
+    "categories": ["All", "Treatments", "Academy", "Transformations"],
+    "items": [
+      { "image": "images/exp-01.jpg", "title": "Signature Facial Session", "category": "Treatments" },
+      { "image": "images/exp-02.jpg", "title": "Hands-on Practical Training", "category": "Academy" },
+      { "image": "images/exp-03.jpg", "title": "Client Glow Transformation", "category": "Transformations" },
+      { "image": "images/exp-04.jpg", "title": "Cosmetology Certification", "category": "Academy" },
+      { "image": "images/exp-05.jpg", "title": "Advanced Skin Therapy", "category": "Treatments" }
+    ]
+  },
   "footer": {
     "servicesLinks": [
       { "label": "Signature Facials", "href": "#services" },
