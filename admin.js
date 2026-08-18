@@ -128,6 +128,30 @@ async function fetchConfig() {
 
     if (data && data.content) {
       activeData = data.content;
+      
+      // Auto-merge missing keys from local data.json if any are missing (like the new gallery)
+      let needsSave = false;
+      try {
+        const res = await fetch("data.json", { cache: "no-store" });
+        const defaultData = await res.json();
+        
+        for (const key in defaultData) {
+          if (activeData[key] === undefined) {
+            activeData[key] = defaultData[key];
+            needsSave = true;
+          }
+        }
+      } catch (mergeErr) {
+        console.warn("Failed to fetch default data for merging:", mergeErr);
+      }
+      
+      if (needsSave) {
+        console.log("Database missing new section fields. Auto-merging and saving...");
+        await supabaseClient
+          .from("site_settings")
+          .upsert({ id: 1, content: activeData, updated_at: new Date().toISOString() });
+      }
+      
       showToast("Configuration loaded from database.", "success");
     } else {
       // 2. Database table is empty! Let's bootstrap it with local data.json

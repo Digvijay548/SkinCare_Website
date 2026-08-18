@@ -948,6 +948,20 @@ function isValidPhone(phone) {
       
       if (!error && data && data.content) {
         D = data.content;
+        
+        // Safety: if the database row doesn't contain a newly introduced config block (like gallery), merge from local data.json
+        try {
+          const res = await fetch("data.json", { cache: "no-store" });
+          const defaultData = await res.json();
+          for (const key in defaultData) {
+            if (D[key] === undefined) {
+              D[key] = defaultData[key];
+            }
+          }
+        } catch (mergeErr) {
+          console.warn("Client fallback merge failed:", mergeErr);
+        }
+        
         loadedFromSupabase = true;
         console.log("Loaded configuration dynamically from Supabase database.");
       } else if (error) {
