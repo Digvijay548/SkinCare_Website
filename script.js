@@ -282,9 +282,7 @@ function renderGallery() {
   } else {
     if (secEl) secEl.style.display = "";
   }
-  
-  // Render headers
-  document.getElementById("galleryHeader").innerHTML = headerHTML(g.eyebrow, g.title, g.titleAccent, g.subtitle);
+
   
   // Render filters
   const cats = g.categories || ["All"];

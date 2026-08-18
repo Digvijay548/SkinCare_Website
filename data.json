@@ -290,10 +290,6 @@
   },
   "gallery": {
     "enabled": true,
-    "eyebrow": "Our Showcase",
-    "title": "Real Results, Real",
-    "titleAccent": "Glow",
-    "subtitle": "A glimpse of our signature treatments, cosmetology training, and client transformations.",
     "categories": ["All", "Treatments", "Academy", "Transformations"],
     "items": [
       { "image": "images/exp-01.jpg", "title": "Signature Facial Session", "category": "Treatments" },

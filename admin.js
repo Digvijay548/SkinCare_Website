@@ -1355,7 +1355,7 @@ function renderGalleryTab(panel) {
   `).join("");
 
   panel.innerHTML = `
-    ${getSectionHeader("Showcase Gallery Settings", "Add, edit, or delete items and images shown in the animated showcase gallery.")}
+    ${getSectionHeader("Showcase Gallery Settings", "Add, edit, or delete criteria and photos shown in the showcase gallery.")}
     
     <div class="toggle-group">
       <div class="toggle-label">
@@ -1367,33 +1367,11 @@ function renderGalleryTab(panel) {
         <span class="slider"></span>
       </label>
     </div>
-    
-    <div class="form-section-card">
-      <div class="form-section-title">Gallery Headers</div>
-      <div class="form-row-3">
-        <div class="form-group">
-          <label>Eyebrow Tag</label>
-          <input type="text" value="${val(g.eyebrow)}" oninput="activeData.gallery.eyebrow = this.value">
-        </div>
-        <div class="form-group">
-          <label>Title Line</label>
-          <input type="text" value="${val(g.title)}" oninput="activeData.gallery.title = this.value">
-        </div>
-        <div class="form-group">
-          <label>Title Accent</label>
-          <input type="text" value="${val(g.titleAccent)}" oninput="activeData.gallery.titleAccent = this.value">
-        </div>
-      </div>
-      <div class="form-group" style="margin: 0">
-        <label>Section Subtitle Description</label>
-        <input type="text" value="${val(g.subtitle)}" oninput="activeData.gallery.subtitle = this.value" style="width:100%">
-      </div>
-    </div>
 
     <div class="form-section-card">
-      <div class="form-section-title">Category Filters Settings</div>
+      <div class="form-section-title">Showcase Criteria / Categories</div>
       <div class="form-group" style="margin: 0">
-        <label>Categories (Comma separated, do NOT include 'All')</label>
+        <label>Criteria Tags (Comma separated, do NOT include 'All')</label>
         <input type="text" value="${val(g.categories.filter(c => c !== "All").join(', '))}" oninput="activeData.gallery.categories = ['All', ...this.value.split(',').map(s=>s.trim()).filter(Boolean)]">
       </div>
     </div>
