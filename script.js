@@ -409,9 +409,9 @@ window.openLightbox = function(index) {
 
 /* ── RENDER: TESTIMONIALS ─────────────────────────────── */
 function renderTestimonials() {
-  const s = D.sections.testimonials;
-  let title = s.title;
-  let subtitle = s.subtitle;
+  const s = D.sections.testimonials || {};
+  let title = s.title || "";
+  let subtitle = s.subtitle || "";
   if (!isAcademyEnabled) {
     title = title.replace(/\s*&\s*Students/i, "");
     subtitle = subtitle.replace(/\s*and\s*students/i, "");
