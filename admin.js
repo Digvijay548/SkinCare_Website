@@ -481,6 +481,53 @@ function renderSiteInfo(panel) {
         </div>
       </div>
     </div>
+
+    <div class="form-section-card">
+      <div class="form-section-title">Social Media Profiles</div>
+      
+      <!-- Instagram -->
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px; margin-bottom: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong>Instagram Profile</strong>
+          <label class="switch" style="transform: scale(0.8)">
+            <input type="checkbox" ${activeData.footer.social[0].enabled !== false ? 'checked' : ''} onchange="activeData.footer.social[0].enabled = this.checked">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="form-group" style="margin: 0">
+          <label>Instagram Page Link URL</label>
+          <input type="text" value="${val(activeData.footer.social[0].href)}" oninput="activeData.footer.social[0].href = this.value" placeholder="e.g., https://instagram.com/yourbrand">
+        </div>
+      </div>
+
+      <!-- Facebook -->
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px; margin-bottom: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong>Facebook Profile</strong>
+          <label class="switch" style="transform: scale(0.8)">
+            <input type="checkbox" ${activeData.footer.social[1].enabled !== false ? 'checked' : ''} onchange="activeData.footer.social[1].enabled = this.checked">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="form-group" style="margin: 0">
+          <label>Facebook Page Link URL</label>
+          <input type="text" value="${val(activeData.footer.social[1].href)}" oninput="activeData.footer.social[1].href = this.value" placeholder="e.g., https://facebook.com/yourbrand">
+        </div>
+      </div>
+
+      <!-- WhatsApp Footer Link -->
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong>WhatsApp Footer Shortcut</strong>
+          <label class="switch" style="transform: scale(0.8)">
+            <input type="checkbox" ${activeData.footer.social[2].enabled !== false ? 'checked' : ''} onchange="activeData.footer.social[2].enabled = this.checked">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin: 0">Uses the main contact WhatsApp phone number. Toggling this off hides it from the footer shortcuts.</p>
+      </div>
+
+    </div>
   `;
 }
 

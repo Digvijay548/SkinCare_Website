@@ -513,7 +513,7 @@ function renderFooter() {
       </a>
       <p class="footer-tagline">${esc(s.footerTagline)}</p>
       <div class="footer-social">
-        ${f.social.map(soc => {
+        ${f.social.filter(soc => soc.enabled !== false).map(soc => {
           const href = soc.href === "whatsapp" ? wa : soc.href;
           if (soc.href === "#") {
             return `<a href="javascript:void(0)" aria-label="${esc(soc.label)} (coming soon)" title="${esc(soc.label)} — link coming soon" class="social-link social-placeholder" role="button">${soc.icon}</a>`;
