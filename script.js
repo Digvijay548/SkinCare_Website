@@ -66,37 +66,80 @@ function renderHeader() {
 /* ── RENDER: HERO ─────────────────────────────────────── */
 function renderHero() {
   const h = D.hero;
-  const titleHTML = h.titleLines.map(l =>
-    l.accent ? `<span class="hero-title-accent" id="heroTypewriter">${esc(l.text)}</span>` : esc(l.text)
-  ).join("<br/>");
+  
+  // Detect if slideshow is configured
+  const hasSlides = h.slides && Array.isArray(h.slides) && h.slides.length > 0;
+  
+  if (hasSlides) {
+    // Render slideshow container background
+    document.getElementById("heroBg").innerHTML = h.slides.map((slide, idx) => `
+      <div class="hero-slide${idx === 0 ? ' active' : ''}" style="background-image: url('${esc(slide.image)}');" aria-label="${esc(slide.imageAlt)}"></div>
+    `).join("") + '<div class="hero-bg-overlay"></div>';
+    
+    const firstSlide = h.slides[0];
+    document.getElementById("heroContent").innerHTML = `
+      <div class="hero-badge">
+        <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="#F472B6"/></svg>
+        ${esc(h.badge)}
+      </div>
+      <h1 class="hero-title" id="heroTitleEl" style="transition: opacity 0.6s ease, transform 0.6s ease;">
+        <span id="heroTitleText">${esc(firstSlide.title)}</span><br/>
+        <span class="hero-title-accent" id="heroTitleAccent">${esc(firstSlide.titleAccent)}</span>
+      </h1>
+      <p class="hero-subtitle">${esc(h.subtitle)}</p>
+      <div class="hero-actions">
+        <a href="${esc(h.btnPrimary.href)}" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          ${esc(h.btnPrimary.label)}
+        </a>
+        <a href="${esc(h.btnSecondary.href)}" class="btn btn-outline btn-lg">${esc(h.btnSecondary.label)}</a>
+      </div>
+      <div class="hero-trust">
+        ${h.trust.map((t, i) => `
+          ${i > 0 ? '<div class="trust-divider"></div>' : ''}
+          <div class="trust-item"><strong>${esc(t.value)}</strong><span>${esc(t.label)}</span></div>
+        `).join("")}
+      </div>
+    `;
+    
+    // Start slides loop rotation
+    startHeroSlider(h.slides);
+  } else {
+    // Fallback to original single layout
+    const titleHTML = h.titleLines.map(l =>
+      l.accent ? `<span class="hero-title-accent" id="heroTypewriter">${esc(l.text)}</span>` : esc(l.text)
+    ).join("<br/>");
 
-  document.getElementById("heroContent").innerHTML = `
-    <div class="hero-badge">
-      <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="#F472B6"/></svg>
-      ${esc(h.badge)}
-    </div>
-    <h1 class="hero-title">${titleHTML}</h1>
-    <p class="hero-subtitle">${esc(h.subtitle)}</p>
-    <div class="hero-actions">
-      <a href="${esc(h.btnPrimary.href)}" class="btn btn-primary btn-lg">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        ${esc(h.btnPrimary.label)}
-      </a>
-      <a href="${esc(h.btnSecondary.href)}" class="btn btn-outline btn-lg">${esc(h.btnSecondary.label)}</a>
-    </div>
-    <div class="hero-trust">
-      ${h.trust.map((t, i) => `
-        ${i > 0 ? '<div class="trust-divider"></div>' : ''}
-        <div class="trust-item"><strong>${esc(t.value)}</strong><span>${esc(t.label)}</span></div>
-      `).join("")}
-    </div>
-  `;
-
+    document.getElementById("heroContent").innerHTML = `
+      <div class="hero-badge">
+        <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="#F472B6"/></svg>
+        ${esc(h.badge)}
+      </div>
+      <h1 class="hero-title">${titleHTML}</h1>
+      <p class="hero-subtitle">${esc(h.subtitle)}</p>
+      <div class="hero-actions">
+        <a href="${esc(h.btnPrimary.href)}" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          ${esc(h.btnPrimary.label)}
+        </a>
+        <a href="${esc(h.btnSecondary.href)}" class="btn btn-outline btn-lg">${esc(h.btnSecondary.label)}</a>
+      </div>
+      <div class="hero-trust">
+        ${h.trust.map((t, i) => `
+          ${i > 0 ? '<div class="trust-divider"></div>' : ''}
+          <div class="trust-item"><strong>${esc(t.value)}</strong><span>${esc(t.label)}</span></div>
+        `).join("")}
+      </div>
+    `;
+    
+    document.getElementById("heroBg").innerHTML = `
+      <img src="${esc(h.image)}" alt="${esc(h.imageAlt)}" />
+      <div class="hero-bg-overlay"></div>
+    `;
+  }
+  
+  // Render consultations card visual overlay
   const cc = h.consultCard;
-  document.getElementById("heroBg").innerHTML = `
-    <img src="${esc(h.image)}" alt="${esc(h.imageAlt)}" />
-    <div class="hero-bg-overlay"></div>
-  `;
   document.getElementById("heroVisual").innerHTML = `
     <div class="hero-card-main">
       <div class="hero-consult-card">

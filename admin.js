@@ -378,7 +378,7 @@ async function deleteFileFromStorage(url) {
     if (error) throw error;
     console.log(`Deleted file from storage: ${filePath}`);
   } catch(err) {
-    console.warn(`Failed to delete storage file ${filePath}:`, err.message);
+    showToast(`Storage cleanup failed: ${err.message}`, "error");
   }
 }
 
@@ -550,62 +550,99 @@ function renderSocialMapTab(panel) {
 
 // 2. HERO
 function renderHeroTab(panel) {
-  panel.innerHTML = `
-    ${getSectionHeader("Hero Section Settings", "Change banner text, trust signals, main CTA buttons, and upload the landing page background image.")}
+  const h = activeData.hero || {};
+  if (!h.slides || !Array.isArray(h.slides)) {
+    h.slides = [
+      {
+        image: h.image || "images/skin-hero.jpg",
+        imageAlt: h.imageAlt || "Professional Cosmetology Training",
+        title: "Empowering Your Passion in",
+        titleAccent: "Cosmetology"
+      }
+    ];
+    activeData.hero = h;
+  }
 
-    <div class="form-section-card">
-      <div class="form-section-title">Landing Image</div>
-      <div class="image-upload-wrapper">
-        <div class="image-preview" id="heroImagePreview">
-          <img src="${activeData.hero.image}" alt="Hero Image">
+  let slidesHTML = h.slides.map((slide, idx) => `
+    <div class="item-card">
+      <div class="item-card-header">
+        <h4>Hero Slide #${idx + 1}</h4>
+        ${h.slides.length > 1 ? `<button class="btn btn-danger btn-sm" onclick="deleteHeroSlide(${idx})">🗑️ Delete Slide</button>` : ''}
+      </div>
+      
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Slide Title (Main Text)</label>
+          <input type="text" value="${val(slide.title)}" oninput="activeData.hero.slides[${idx}].title = this.value">
         </div>
-        <div class="image-upload-controls">
-          <div style="display:flex; gap:10px; flex-wrap: wrap;">
-            <div class="btn btn-outline btn-sm file-input-btn">
-              📤 Upload New Image
-              <input type="file" accept="image/*" onchange="handleImageUpload(this, 'heroImagePreview', 'hero.image')">
+        <div class="form-group">
+          <label>Slide Title Accent (Colored Text)</label>
+          <input type="text" value="${val(slide.titleAccent)}" oninput="activeData.hero.slides[${idx}].titleAccent = this.value">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Image Alt Text (SEO)</label>
+        <input type="text" value="${val(slide.imageAlt)}" oninput="activeData.hero.slides[${idx}].imageAlt = this.value">
+      </div>
+
+      <div class="form-group" style="margin: 0">
+        <label>Background Image</label>
+        <div class="image-upload-wrapper">
+          <div class="image-preview" id="heroSlidePrev-${idx}">
+            ${slide.image ? `<img src="${slide.image}" alt="Slide Preview">` : `<div class="image-preview-placeholder">No Image</div>`}
+          </div>
+          <div class="image-upload-controls">
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+              <div class="btn btn-outline btn-sm file-input-btn">
+                📤 Upload Image
+                <input type="file" accept="image/*" onchange="handleImageUpload(this, 'heroSlidePrev-${idx}', 'hero.slides[${idx}].image')">
+              </div>
+              ${slide.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('hero.slides[${idx}].image', 'heroSlidePrev-${idx}')">🗑️ Remove Image</button>` : ''}
             </div>
-            ${activeData.hero.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('hero.image', 'heroImagePreview')">🗑️ Remove Image</button>` : ''}
-          </div>
-          <p>Recommended: 1920x1080px or higher, landscape ratio, premium aesthetic.</p>
-          <div class="form-group" style="margin-top: 10px; width: 100%">
-            <label>Image Alt Text (SEO)</label>
-            <input type="text" value="${val(activeData.hero.imageAlt)}" oninput="activeData.hero.imageAlt = this.value">
           </div>
         </div>
       </div>
     </div>
+  `).join("");
+
+  panel.innerHTML = `
+    ${getSectionHeader("Hero Section Settings", "Change hero slides, slide images, individual slide titles, subtitles, CTAs, and overlay trust badges.")}
 
     <div class="form-section-card">
-      <div class="form-section-title">Hero Main Text</div>
-      <div class="form-group">
+      <div class="form-section-title">Hero Badge Settings</div>
+      <div class="form-group" style="margin: 0">
         <label>Header Badge Label</label>
-        <input type="text" value="${val(activeData.hero.badge)}" oninput="activeData.hero.badge = this.value">
-      </div>
-      <div class="form-group">
-        <label>Title Lines (Line 1, Accent Line, Line 3)</label>
-        <div class="form-row-3">
-          <input type="text" placeholder="Line 1" value="${val(activeData.hero.titleLines[0]?.text)}" oninput="activeData.hero.titleLines[0].text = this.value">
-          <input type="text" placeholder="Accent Line (Typewriter)" value="${val(activeData.hero.titleLines[1]?.text)}" oninput="activeData.hero.titleLines[1].text = this.value">
-          <input type="text" placeholder="Line 3" value="${val(activeData.hero.titleLines[2]?.text)}" oninput="activeData.hero.titleLines[2].text = this.value">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Hero Subtitle</label>
-        <textarea oninput="activeData.hero.subtitle = this.value">${activeData.hero.subtitle}</textarea>
+        <input type="text" value="${val(h.badge)}" oninput="activeData.hero.badge = this.value">
       </div>
     </div>
 
     <div class="form-section-card">
+      <div class="form-section-title">Hero Subtitle & Description</div>
+      <div class="form-group" style="margin: 0">
+        <label>Hero Subtitle</label>
+        <textarea oninput="activeData.hero.subtitle = this.value">${h.subtitle}</textarea>
+      </div>
+    </div>
+
+    <h3 style="font-size: 16px; margin-bottom: 12px; font-weight:600">Hero Slideshow Settings</h3>
+    <div class="items-list-grid">
+      ${slidesHTML}
+      <div class="add-item-card" onclick="addHeroSlide()">
+        ➕ Add New Hero Slide
+      </div>
+    </div>
+
+    <div class="form-section-card" style="margin-top: 24px;">
       <div class="form-section-title">Buttons & CTAs</div>
       <div class="form-row-2">
         <div class="form-group">
           <label>Primary Button Label</label>
-          <input type="text" value="${val(activeData.hero.btnPrimary.label)}" oninput="activeData.hero.btnPrimary.label = this.value">
+          <input type="text" value="${val(h.btnPrimary.label)}" oninput="activeData.hero.btnPrimary.label = this.value">
         </div>
         <div class="form-group">
           <label>Secondary Button Label</label>
-          <input type="text" value="${val(activeData.hero.btnSecondary.label)}" oninput="activeData.hero.btnSecondary.label = this.value">
+          <input type="text" value="${val(h.btnSecondary.label)}" oninput="activeData.hero.btnSecondary.label = this.value">
         </div>
       </div>
     </div>
@@ -1393,9 +1430,13 @@ window.migrateAllLocalImages = async function() {
     // Find all images in activeData
     const imageTargets = [];
     
-    // 1. Hero image
-    if (activeData.hero && activeData.hero.image) {
-      imageTargets.push({ path: "hero.image", val: activeData.hero.image });
+    // 1. Hero slideshow images
+    if (activeData.hero && activeData.hero.slides && Array.isArray(activeData.hero.slides)) {
+      activeData.hero.slides.forEach((slide, i) => {
+        if (slide.image) {
+          imageTargets.push({ path: `hero.slides[${i}].image`, val: slide.image });
+        }
+      });
     }
     // 2. Academy image
     if (activeData.academic && activeData.academic.image) {
@@ -1663,4 +1704,38 @@ window.addCriteria = function() {
   
   showToast("Criteria added.", "success");
   renderCurrentTab();
+};
+
+// Hero slide helper functions
+window.deleteHeroSlide = async function(idx) {
+  const h = activeData.hero;
+  if (h.slides.length <= 1) {
+    showToast("You must keep at least one slide.", "error");
+    return;
+  }
+  if (confirm("Are you sure you want to delete this hero slide?")) {
+    const oldUrl = h.slides[idx].image;
+    h.slides.splice(idx, 1);
+    showToast("Hero slide deleted. Saving changes...", "info");
+    if (oldUrl) await deleteFileFromStorage(oldUrl);
+    await saveChanges();
+    renderCurrentTab();
+  }
+};
+
+window.addHeroSlide = function() {
+  const h = activeData.hero;
+  h.slides.push({
+    image: "",
+    imageAlt: "Wenni Skincare Academy Banner",
+    title: "New Slide Title",
+    titleAccent: "Accent"
+  });
+  showToast("New hero slide added.", "success");
+  renderCurrentTab();
+  
+  setTimeout(() => {
+    const cards = document.querySelectorAll(".item-card");
+    if (cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
+  }, 100);
 };
