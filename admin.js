@@ -645,10 +645,11 @@ function renderServicesTab(panel) {
   `;
 }
 
-window.deleteService = function(index) {
+window.deleteService = async function(index) {
   if (confirm("Are you sure you want to delete this service?")) {
     activeData.services.splice(index, 1);
-    showToast("Service deleted locally. Click save changes to apply.", "info");
+    showToast("Service deleted. Saving to database...", "info");
+    await saveChanges();
     renderCurrentTab();
   }
 };
@@ -860,10 +861,11 @@ function renderAcademyTab(panel) {
   `;
 }
 
-window.deleteCourse = function(index) {
+window.deleteCourse = async function(index) {
   if (confirm("Are you sure you want to delete this course?")) {
     activeData.academic.courses.splice(index, 1);
-    showToast("Course deleted locally. Click save changes to apply.", "info");
+    showToast("Course deleted. Saving to database...", "info");
+    await saveChanges();
     renderCurrentTab();
   }
 };
@@ -1010,10 +1012,11 @@ function renderTestimonialsTab(panel) {
   `;
 }
 
-window.deleteTestimonial = function(index) {
+window.deleteTestimonial = async function(index) {
   if (confirm("Are you sure you want to delete this review?")) {
     activeData.testimonials.splice(index, 1);
-    showToast("Review deleted locally.", "info");
+    showToast("Review deleted. Saving to database...", "info");
+    await saveChanges();
     renderCurrentTab();
   }
 };
@@ -1393,10 +1396,11 @@ function renderGalleryTab(panel) {
   `;
 }
 
-window.deleteGalleryItem = function(index) {
+window.deleteGalleryItem = async function(index) {
   if (confirm("Are you sure you want to delete this gallery image?")) {
     activeData.gallery.items.splice(index, 1);
-    showToast("Photo deleted locally.", "info");
+    showToast("Photo deleted. Saving to database...", "info");
+    await saveChanges();
     renderCurrentTab();
   }
 };
@@ -1442,7 +1446,7 @@ window.updateCriteria = function(idx, value) {
   renderCurrentTab();
 };
 
-window.deleteCriteria = function(idx) {
+window.deleteCriteria = async function(idx) {
   const g = activeData.gallery;
   const cats = g.categories.filter(c => c !== "All");
   const catToDelete = cats[idx];
@@ -1460,7 +1464,8 @@ window.deleteCriteria = function(idx) {
       });
     }
     
-    showToast(`Criteria "${catToDelete}" removed.`, "info");
+    showToast(`Criteria "${catToDelete}" removed. Saving to database...`, "info");
+    await saveChanges();
     renderCurrentTab();
   }
 };
