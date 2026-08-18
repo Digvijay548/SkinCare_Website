@@ -2071,6 +2071,7 @@ function applyCustomThemeStyles(themeObj) {
     const bgRgb = hexToRgb(bg);
     const accRgb = hexToRgb(acc);
     
+    const escapedAcc = encodeURIComponent(acc);
     styleEl.innerHTML = `
       body.theme-custom {
         --plum: ${bg};
@@ -2083,6 +2084,7 @@ function applyCustomThemeStyles(themeObj) {
         --blush: rgba(${accRgb}, 0.08);
         --border: rgba(${accRgb}, 0.2);
         --text: ${acc};
+        --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='${escapedAcc}' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
       }
       body.admin-body.theme-custom {
         --color-primary: ${bg};
