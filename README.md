@@ -104,21 +104,25 @@ WITH CHECK (true);
 ```
 4. Click **Run** in the top right to execute.
 
-### Step 3: Create the Storage Bucket for Images
-1. Click **Storage** in the left sidebar.
-2. Click **New bucket** and name it exactly: `skincare-assets`
-3. Toggle the **Public bucket** switch to **ON** (so visitors can load the images you upload). Click **Save**.
-4. Go to your `skincare-assets` bucket -> **Policies** (or **Policies** under the configuration sidebar):
-   - Click **New policy** -> **For full customization** to create a **Read Policy**:
-     * **Name**: `Allow public read`
-     * **Allowed operations**: Select **SELECT** only.
-     * **Target role**: `public` (anyone).
-     * Save the policy.
-   - Click **New policy** -> **For full customization** to create an **Upload Policy**:
-     * **Name**: `Allow authenticated uploads`
-     * **Allowed operations**: Select **INSERT**, **UPDATE**, and **DELETE** operations.
-     * **Target role**: `authenticated` (logged-in admin).
-     * Save the policy.
+### Step 3: Create the Storage Bucket & Upload Policies
+1. Click **Storage** in the left sidebar of the Supabase dashboard.
+2. Click **New bucket** and name the bucket exactly: `skincare-assets`
+3. Toggle the **Public bucket** switch to **ON** (this is critical so that website visitors can load the images you upload). Click **Save**.
+4. Go to your `skincare-assets` bucket and click on **Policies** (or **Policies** under the Storage configuration section in the left sidebar):
+   * **Read Policy (Select)**:
+     - Click **New policy** -> Select **For full customization** (custom query).
+     - **Name**: `Allow public read`
+     - **Allowed operations**: Check **SELECT** only.
+     - **Target role**: Select `public` (anyone).
+     - **Policy Definition (USING expression)**: Type exactly `true` in the text editor box.
+     - Click **Save policy**.
+   * **Manage Policy (Insert/Update/Delete)**:
+     - Click **New policy** -> Select **For full customization** (custom query).
+     - **Name**: `Allow authenticated management`
+     - **Allowed operations**: Check **INSERT**, **UPDATE**, and **DELETE** only.
+     - **Target role**: Select `authenticated` (your logged-in admin user).
+     - **Policy Definition (WITH CHECK / USING expressions)**: Type exactly `true` in both expression text editor boxes.
+     - Click **Save policy**.
 
 ### Step 4: Create Admin Login Credentials
 1. Click **Authentication** in the left sidebar.
@@ -130,14 +134,23 @@ WITH CHECK (true);
 7. Ensure **Enable Email provider** is **ON**.
 8. Ensure **Confirm email** toggle is **OFF** (this bypasses email link validation so you can log in immediately). Click **Save**.
 
-### Step 5: Configure website connection keys
-1. Go to **Project Settings** (gear icon at bottom left) -> **API**.
-2. Copy the **Project URL** and the **anon / public** API Key.
-3. Open [`supabase-config.js`](file:///c:/GitHub/SkinCare_Website/supabase-config.js) and paste them:
+### Step 5: Configure Website Connection API Keys
+To connect your local codebase with your Supabase database:
+1. Go to **Project Settings** (click the gear icon ⚙️ at the bottom of the left-hand sidebar).
+2. Under the Project Settings menu, click on **API**.
+3. **Copy the Project URL**:
+   - Locate the box labeled **Project URL** (under the "API Settings" header).
+   - Copy the URL link (it starts with `https://` and ends with `.supabase.co`).
+4. **Copy the Anon Public Key**:
+   - Scroll down to the **Project API keys** section.
+   - Locate the row labeled **`anon` / `public`**.
+   - Click **Copy** to copy the long string of characters (which starts with `eyJ...`).
+5. Open the file [`supabase-config.js`](file:///c:/GitHub/SkinCare_Website/supabase-config.js) in your text editor.
+6. Replace the placeholder values with your copied credentials. Make sure to keep the double quotes:
 ```javascript
 window.SUPABASE_CONFIG = {
-  url: "https://tvkagfntkhtyapyyecbc.supabase.co",      // Paste your project URL here
-  anonKey: "sb_publishable_IaaruVvciVDiWtR9nK8Cqw_o95qpSWH"   // Paste your anon key here
+  url: "https://your-project-id.supabase.co",          // Paste your copied Project URL here
+  anonKey: "your-anon-public-api-key-here"            // Paste your copied anon/public API key here
 };
 ```
 
