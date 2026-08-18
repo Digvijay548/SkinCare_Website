@@ -163,6 +163,45 @@ function renderHero() {
   `;
 }
 
+/* ── HERO BACKGROUND SLIDESHOW ─────────────────── */
+let heroSliderTimer = null;
+
+function startHeroSlider(slides) {
+  // Always clear the previous loop — renderAll() can run again on preview updates
+  if (heroSliderTimer) { clearInterval(heroSliderTimer); heroSliderTimer = null; }
+
+  if (!Array.isArray(slides) || slides.length < 2) return;
+
+  const slideEls = document.querySelectorAll("#heroBg .hero-slide");
+  const titleEl = document.getElementById("heroTitleEl");
+  const titleText = document.getElementById("heroTitleText");
+  const titleAccent = document.getElementById("heroTitleAccent");
+  if (slideEls.length < 2) return;
+
+  const delay = Number(D.hero.slideInterval) > 0 ? Number(D.hero.slideInterval) : 6000;
+  let current = 0;
+
+  heroSliderTimer = setInterval(() => {
+    const next = (current + 1) % slideEls.length;
+
+    slideEls[current].classList.remove("active");
+    slideEls[next].classList.add("active");
+
+    if (titleEl && titleText && titleAccent) {
+      titleEl.style.opacity = "0";
+      titleEl.style.transform = "translateY(12px)";
+      setTimeout(() => {
+        titleText.textContent = slides[next].title ?? "";
+        titleAccent.textContent = slides[next].titleAccent ?? "";
+        titleEl.style.opacity = "1";
+        titleEl.style.transform = "";
+      }, 600);
+    }
+
+    current = next;
+  }, delay);
+}
+
 /* ── RENDER: ABOUT ────────────────────────────────────── */
 function renderAbout() {
   const a = D.about;
