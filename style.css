@@ -927,7 +927,7 @@ textarea:focus-visible {
   transform: translateY(-1px);
 }
 .gallery-filter-btn.active {
-  background: linear-gradient(135deg, var(--purple) 0%, var(--pink) 100%);
+  background: linear-gradient(135deg, var(--purple) 0%, var(--rose) 100%);
   border-color: transparent;
   color: white;
   box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35);
@@ -1052,7 +1052,7 @@ textarea:focus-visible {
   justify-content: center;
 }
 .lightbox-close:hover {
-  color: var(--pink);
+  color: var(--rose);
   transform: scale(1.1);
 }
 .lightbox-caption {
