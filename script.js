@@ -125,10 +125,12 @@ function renderHero() {
         <a href="${esc(h.btnSecondary.href)}" class="btn btn-outline btn-lg">${esc(h.btnSecondary.label)}</a>
       </div>
       <div class="hero-trust">
-        ${h.trust.map((t, i) => `
-          ${i > 0 ? '<div class="trust-divider"></div>' : ''}
-          <div class="trust-item"><strong>${esc(t.value)}</strong><span>${esc(t.label)}</span></div>
-        `).join("")}
+        ${h.trust
+          .filter(t => isAcademyEnabled || !t.label.toLowerCase().includes("student"))
+          .map((t, index) => `
+            ${index > 0 ? '<div class="trust-divider"></div>' : ''}
+            <div class="trust-item"><strong>${esc(t.value)}</strong><span>${esc(t.label)}</span></div>
+          `).join("")}
       </div>
     `;
     
@@ -183,14 +185,16 @@ function renderAbout() {
       <h2 class="section-title">${esc(a.title)} <span class="accent">${esc(a.titleAccent)}</span></h2>
       ${a.desc.map(d => `<p class="about-desc">${esc(d)}</p>`).join("")}
       <div class="about-features">
-        ${a.features.map(f => `
-          <div class="about-feat">
-            <div class="feat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        ${a.features
+          .filter(f => isAcademyEnabled || (!f.toLowerCase().includes("cosmetology") && !f.toLowerCase().includes("training") && !f.toLowerCase().includes("academy")))
+          .map(f => `
+            <div class="about-feat">
+              <div class="feat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span>${esc(f)}</span>
             </div>
-            <span>${esc(f)}</span>
-          </div>
-        `).join("")}
+          `).join("")}
       </div>
       <a href="#appointment" class="btn btn-primary">${esc(a.btnLabel)}</a>
     </div>
@@ -304,11 +308,20 @@ function renderDoctor() {
       <p class="section-eyebrow">${esc(doc.eyebrow)}</p>
       <h2 class="section-title">${esc(doc.name)}</h2>
       <p class="doctor-degree">${esc(doc.degree)}</p>
-      ${doc.bio.map(b => `<p class="doctor-bio">${esc(b)}</p>`).join("")}
+      ${doc.bio.map(b => {
+        let text = b;
+        if (!isAcademyEnabled) {
+          text = text.replace(/(\s*-\s*)?and trained (hundreds|thousands) of students to do the same\.?/i, ".");
+          text = text.replace(/\s\./g, ".");
+        }
+        return `<p class="doctor-bio">${esc(text)}</p>`;
+      }).join("")}
       <div class="doctor-credentials">
-        ${doc.credentials.map(c => `
-          <div class="cred-item"><strong>${esc(c.value)}</strong><span>${esc(c.label)}</span></div>
-        `).join("")}
+        ${doc.credentials
+          .filter(c => isAcademyEnabled || !c.label.toLowerCase().includes("student"))
+          .map(c => `
+            <div class="cred-item"><strong>${esc(c.value)}</strong><span>${esc(c.label)}</span></div>
+          `).join("")}
       </div>
       <a href="#appointment" class="btn btn-primary">${esc(doc.btnLabel)}</a>
     </div>
@@ -392,8 +405,17 @@ window.openLightbox = function(index) {
 /* ── RENDER: TESTIMONIALS ─────────────────────────────── */
 function renderTestimonials() {
   const s = D.sections.testimonials;
-  document.getElementById("testiHeader").innerHTML = headerHTML(s.eyebrow, s.title, s.titleAccent, s.subtitle);
-  document.getElementById("testiGrid").innerHTML = D.testimonials.map(ti => `
+  let title = s.title;
+  let subtitle = s.subtitle;
+  if (!isAcademyEnabled) {
+    title = title.replace(/\s*&\s*Students/i, "");
+    subtitle = subtitle.replace(/\s*and\s*students/i, "");
+  }
+  document.getElementById("testiHeader").innerHTML = headerHTML(s.eyebrow, title, s.titleAccent, subtitle);
+  
+  const filteredTestimonials = D.testimonials.filter(ti => isAcademyEnabled || (!ti.role.toLowerCase().includes("student") && !ti.text.toLowerCase().includes("course")));
+  
+  document.getElementById("testiGrid").innerHTML = filteredTestimonials.map(ti => `
     <div class="testi-card${ti.featured ? " testi-featured" : ""}">
       <div class="testi-stars">${"★".repeat(ti.stars)}${"☆".repeat(Math.max(0, 5 - ti.stars))}</div>
       <p class="testi-text">"${esc(ti.text)}"</p>
@@ -463,7 +485,9 @@ function renderAppointment() {
             <label for="treatment">${esc(a.labels.treatment)}</label>
             <select id="treatment" required>
               <option value="">${esc(a.placeholders.treatment)}</option>
-              ${a.treatmentOptions.map(t => `<option>${esc(t)}</option>`).join("")}
+              ${a.treatmentOptions
+                .filter(t => isAcademyEnabled || (!t.toLowerCase().includes("student") && !t.toLowerCase().includes("admission")))
+                .map(t => `<option>${esc(t)}</option>`).join("")}
             </select>
           </div>
           <div class="form-group">
