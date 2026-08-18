@@ -11,17 +11,17 @@ let localBackupData = null; // Local copy of fallback data.json
 function showToast(message, type = "info", duration = 4000) {
   const container = document.getElementById("toastContainer");
   if (!container) return;
-  
+
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
-  
+
   let icon = "ℹ️";
   if (type === "success") icon = "✅";
-  if (type === "error")   icon = "⚠️";
-  
+  if (type === "error") icon = "⚠️";
+
   toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
   container.appendChild(toast);
-  
+
   setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateX(50px)";
@@ -44,16 +44,16 @@ function showToast(message, type = "info", duration = 4000) {
   try {
     const { createClient } = window.supabase;
     supabaseClient = createClient(cfg.url, cfg.anonKey);
-    
+
     // Check initial authentication status
     const { data: { session } } = await supabaseClient.auth.getSession();
-    
+
     if (session) {
       onLoginSuccess();
     } else {
       setupAuthListener();
     }
-  } catch(err) {
+  } catch (err) {
     console.error("Supabase initialization error:", err);
     showToast("Error connecting to Supabase: " + err.message, "error");
   }
@@ -75,7 +75,7 @@ function setupAuthListener() {
     const email = document.getElementById("adminEmail").value.trim();
     const password = document.getElementById("adminPassword").value;
     const btn = document.getElementById("loginBtn");
-    
+
     btn.textContent = "Signing in...";
     btn.disabled = true;
 
@@ -83,7 +83,7 @@ function setupAuthListener() {
       const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
       showToast("Log in successful!", "success");
-    } catch(err) {
+    } catch (err) {
       showToast(err.message, "error");
       btn.textContent = "Sign In";
       btn.disabled = false;
@@ -94,7 +94,7 @@ function setupAuthListener() {
 async function onLoginSuccess() {
   document.getElementById("loginWrapper").style.display = "none";
   document.getElementById("dashboardWrapper").style.display = "flex";
-  
+
   showToast("Loading site configuration...", "info");
   await fetchConfig();
   initTabs();
@@ -131,13 +131,13 @@ async function fetchConfig() {
 
     if (data && data.content) {
       activeData = data.content;
-      
+
       // Auto-merge missing keys from local data.json if any are missing (like the new gallery)
       let needsSave = false;
       try {
         const res = await fetch("data.json", { cache: "no-store" });
         const defaultData = await res.json();
-        
+
         for (const key in defaultData) {
           if (activeData[key] === undefined) {
             activeData[key] = defaultData[key];
@@ -147,31 +147,31 @@ async function fetchConfig() {
       } catch (mergeErr) {
         console.warn("Failed to fetch default data for merging:", mergeErr);
       }
-      
+
       if (needsSave) {
         console.log("Database missing new section fields. Auto-merging and saving...");
         await supabaseClient
           .from("site_settings")
           .upsert({ id: 1, content: activeData, updated_at: new Date().toISOString() });
       }
-      
+
       showToast("Configuration loaded from database.", "success");
     } else {
       // 2. Database table is empty! Let's bootstrap it with local data.json
       showToast("Database is empty. Bootstrapping with local data.json...", "info");
       const res = await fetch("data.json", { cache: "no-store" });
       const defaultData = await res.json();
-      
+
       const { error: insertErr } = await supabaseClient
         .from("site_settings")
         .insert([{ id: 1, content: defaultData }]);
-        
+
       if (insertErr) throw insertErr;
-      
+
       activeData = defaultData;
       showToast("Database successfully initialized with default data!", "success");
     }
-    
+
     // Safety check for customTheme configuration
     if (!activeData.site.customTheme) {
       activeData.site.customTheme = {
@@ -203,7 +203,7 @@ async function fetchConfig() {
     }
 
     renderCurrentTab();
-  } catch(err) {
+  } catch (err) {
     console.error("Config fetch error:", err);
     showToast("Error loading configuration: " + err.message, "error");
   }
@@ -218,18 +218,18 @@ function initTabs() {
     item.addEventListener("click", async () => {
       // Clear any pending debounced auto-saves
       if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-      
+
       // Save changes before leaving the current tab
       if (supabaseClient && activeData) {
         await saveChanges();
       }
-      
+
       items.forEach(i => i.classList.remove("active"));
       item.classList.add("active");
-      
+
       // Hide all panels
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-      
+
       currentTab = item.getAttribute("data-tab");
       const targetPanel = document.getElementById(`panel-${currentTab}`);
       if (targetPanel) {
@@ -245,11 +245,11 @@ function initTabs() {
 
 function renderCurrentTab() {
   if (!activeData) return;
-  
+
   const panel = document.getElementById(`panel-${currentTab}`);
   if (!panel) return;
-  
-  switch(currentTab) {
+
+  switch (currentTab) {
     case "site-info":
       renderSiteInfo(panel);
       break;
@@ -311,7 +311,7 @@ async function handleImageUpload(inputEl, previewId, dataPath) {
   const loadingText = document.createElement("div");
   loadingText.className = "image-preview-placeholder";
   loadingText.textContent = "Uploading...";
-  
+
   const originalPreviewContent = previewEl.innerHTML;
   previewEl.innerHTML = "";
   previewEl.appendChild(loadingText);
@@ -342,11 +342,11 @@ async function handleImageUpload(inputEl, previewId, dataPath) {
 
     // Update activeData
     updateNestedValue(activeData, dataPath, publicUrl);
-    
+
     // Update preview
     previewEl.innerHTML = `<img src="${publicUrl}" alt="Preview" />`;
     showToast("Image uploaded successfully!", "success");
-  } catch(err) {
+  } catch (err) {
     console.error("Upload error:", err);
     showToast("Upload failed: " + err.message, "error");
     previewEl.innerHTML = originalPreviewContent;
@@ -390,7 +390,7 @@ function getNestedValue(obj, path) {
       }
     }
     return current;
-  } catch(e) {
+  } catch (e) {
     return undefined;
   }
 }
@@ -411,34 +411,34 @@ function getStoragePathFromUrl(url) {
 async function deleteFileFromStorage(url) {
   const filePath = getStoragePathFromUrl(url);
   if (!filePath) return;
-  
+
   try {
     const { data, error } = await supabaseClient.storage
       .from("skincare-assets")
       .remove([filePath]);
     if (error) throw error;
     console.log(`Deleted file from storage: ${filePath}`);
-  } catch(err) {
+  } catch (err) {
     showToast(`Storage cleanup failed: ${err.message}`, "error");
   }
 }
 
 // Remove image from field, delete from storage, and auto-save
-window.removeImageField = async function(dataPath, previewId) {
+window.removeImageField = async function (dataPath, previewId) {
   if (confirm("Are you sure you want to delete this image?")) {
     const oldUrl = getNestedValue(activeData, dataPath);
     if (oldUrl) {
       showToast("Removing image file...", "info");
       await deleteFileFromStorage(oldUrl);
     }
-    
+
     updateNestedValue(activeData, dataPath, "");
-    
+
     const previewEl = document.getElementById(previewId);
     if (previewEl) {
       previewEl.innerHTML = `<div class="image-preview-placeholder">No Image</div>`;
     }
-    
+
     showToast("Image removed. Saving database...", "info");
     await saveChanges();
     renderCurrentTab();
@@ -998,7 +998,7 @@ function renderServicesTab(panel) {
   `;
 }
 
-window.deleteService = async function(index) {
+window.deleteService = async function (index) {
   if (confirm("Are you sure you want to delete this service?")) {
     const oldUrl = activeData.services[index].image;
     activeData.services.splice(index, 1);
@@ -1009,7 +1009,7 @@ window.deleteService = async function(index) {
   }
 };
 
-window.addService = function() {
+window.addService = function () {
   const defaultIcon = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
   activeData.services.push({
     name: "New Service",
@@ -1020,11 +1020,11 @@ window.addService = function() {
   });
   showToast("Service added at the bottom. Fill details below.", "success");
   renderCurrentTab();
-  
+
   // Scroll to bottom
   setTimeout(() => {
     const cards = document.querySelectorAll(".item-card");
-    if(cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
+    if (cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
   }, 100);
 };
 
@@ -1086,7 +1086,7 @@ function renderWhyUsTab(panel) {
 // 6. ACADEMY
 function renderAcademyTab(panel) {
   const acad = activeData.academic || { enabled: false, stats: [], features: [], courses: [], eyebrow: "", title: "", titleAccent: "", subtitle: "", image: "", imageAlt: "", desc: [] };
-  
+
   // Safeguard array references
   if (!acad.stats) acad.stats = [];
   if (!acad.features) acad.features = [];
@@ -1097,7 +1097,7 @@ function renderAcademyTab(panel) {
   let coursesHTML = acad.courses.map((course, i) => `
     <div class="item-card">
       <div class="item-card-header">
-        <h4>Course #${course.num || i+1}: ${course.title || "Untitled Course"}</h4>
+        <h4>Course #${course.num || i + 1}: ${course.title || "Untitled Course"}</h4>
         <button class="btn btn-danger btn-sm" onclick="deleteCourse(${i})">🗑️ Delete</button>
       </div>
       <div class="image-upload-wrapper" style="margin-bottom: 14px;">
@@ -1214,7 +1214,7 @@ function renderAcademyTab(panel) {
       <div class="form-row-2">
         ${acad.stats.map((st, idx) => `
           <div class="form-group" style="border: 1px solid var(--color-border); padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.1)">
-            <label>Stat Metric #${idx+1} (Value & Label)</label>
+            <label>Stat Metric #${idx + 1} (Value & Label)</label>
             <div class="form-row-2" style="gap: 10px">
               <input type="text" placeholder="Value (e.g. 100+)" value="${val(st.value)}" oninput="activeData.academic.stats[${idx}].value = this.value">
               <input type="text" placeholder="Label (e.g. Graduates)" value="${val(st.label)}" oninput="activeData.academic.stats[${idx}].label = this.value">
@@ -1234,7 +1234,7 @@ function renderAcademyTab(panel) {
   `;
 }
 
-window.deleteCourse = async function(index) {
+window.deleteCourse = async function (index) {
   if (confirm("Are you sure you want to delete this course?")) {
     activeData.academic.courses.splice(index, 1);
     showToast("Course deleted. Saving to database...", "info");
@@ -1243,7 +1243,7 @@ window.deleteCourse = async function(index) {
   }
 };
 
-window.addCourse = function() {
+window.addCourse = function () {
   activeData.academic.courses.push({
     num: String(activeData.academic.courses.length + 1).padStart(2, '0'),
     title: "New Cosmetology Course",
@@ -1299,7 +1299,7 @@ function renderDoctorTab(panel) {
       <div class="form-row-3">
         ${doc.credentials.map((cred, idx) => `
           <div class="form-group" style="border: 1px solid var(--color-border); padding: 10px; border-radius: 8px;">
-            <label>Credential Counter #${idx+1}</label>
+            <label>Credential Counter #${idx + 1}</label>
             <input type="text" placeholder="Value (e.g. 15+)" value="${val(cred.value)}" oninput="activeData.doctor.credentials[${idx}].value = this.value" style="margin-bottom: 6px">
             <input type="text" placeholder="Label (e.g. Experience)" value="${val(cred.label)}" oninput="activeData.doctor.credentials[${idx}].label = this.value">
           </div>
@@ -1386,7 +1386,7 @@ function renderTestimonialsTab(panel) {
   `;
 }
 
-window.deleteTestimonial = async function(index) {
+window.deleteTestimonial = async function (index) {
   if (confirm("Are you sure you want to delete this review?")) {
     activeData.testimonials.splice(index, 1);
     showToast("Review deleted. Saving to database...", "info");
@@ -1395,7 +1395,7 @@ window.deleteTestimonial = async function(index) {
   }
 };
 
-window.addTestimonial = function() {
+window.addTestimonial = function () {
   activeData.testimonials.push({
     stars: 5,
     name: "Client Name",
@@ -1504,36 +1504,36 @@ function renderJsonEditorTab(panel) {
   `;
 }
 
-window.copyJsonToClipboard = function() {
+window.copyJsonToClipboard = function () {
   const txt = document.getElementById("rawJsonTextarea");
   txt.select();
   document.execCommand("copy");
   showToast("JSON copied to clipboard!", "success");
 };
 
-window.applyRawJson = function() {
+window.applyRawJson = function () {
   try {
     const rawVal = document.getElementById("rawJsonTextarea").value;
     const parsed = JSON.parse(rawVal);
     activeData = parsed;
     showToast("JSON applied successfully to browser active data. Click Save Changes to save to database.", "success");
-  } catch(err) {
+  } catch (err) {
     showToast("Invalid JSON syntax: " + err.message, "error");
   }
 };
 
-window.resetJsonToDefault = async function() {
+window.resetJsonToDefault = async function () {
   if (confirm("Resetting will replace active workspace configurations with data.json values. Are you sure?")) {
     try {
       const res = await fetch("data.json", { cache: "no-store" });
       const defaultData = await res.json();
       activeData = defaultData;
-      
+
       const txt = document.getElementById("rawJsonTextarea");
       if (txt) txt.value = JSON.stringify(activeData, null, 2);
-      
+
       showToast("Reset successfully! Click Save Changes to commit to database.", "success");
-    } catch(err) {
+    } catch (err) {
       showToast("Failed to fetch defaults: " + err.message, "error");
     }
   }
@@ -1562,16 +1562,16 @@ async function saveChanges() {
   try {
     const { error } = await supabaseClient
       .from("site_settings")
-      .upsert({ 
-        id: 1, 
-        content: activeData, 
-        updated_at: new Date().toISOString() 
+      .upsert({
+        id: 1,
+        content: activeData,
+        updated_at: new Date().toISOString()
       });
 
     if (error) throw error;
-    
+
     showToast("All changes saved to database successfully!", "success");
-  } catch(err) {
+  } catch (err) {
     console.error("Save error:", err);
     showToast("Failed to save changes: " + err.message, "error");
   } finally {
@@ -1584,23 +1584,23 @@ async function saveChanges() {
 }
 
 // ── MIGRATE LOCAL IMAGES TO SUPABASE ─────────────────────
-window.migrateAllLocalImages = async function() {
+window.migrateAllLocalImages = async function () {
   if (!supabaseClient || !activeData) {
     showToast("Database not connected or configurations not loaded.", "error");
     return;
   }
-  
+
   const btn = document.getElementById("migrateImagesBtn");
   const originalText = btn.innerHTML;
   btn.innerHTML = "⏳ Migrating...";
   btn.disabled = true;
-  
+
   try {
     showToast("Starting image migration...", "info");
-    
+
     // Find all images in activeData
     const imageTargets = [];
-    
+
     // 1. Hero slideshow images
     if (activeData.hero && activeData.hero.slides && Array.isArray(activeData.hero.slides)) {
       activeData.hero.slides.forEach((slide, i) => {
@@ -1637,47 +1637,47 @@ window.migrateAllLocalImages = async function() {
         }
       });
     }
-    
+
     // Filter to keep only local images (e.g., starting with "images/")
     const locals = imageTargets.filter(t => t.val && !t.val.startsWith("http") && !t.val.startsWith("data:"));
-    
+
     if (locals.length === 0) {
       showToast("No local images to migrate! All images are already stored in Supabase.", "success");
       return;
     }
-    
+
     showToast(`Found ${locals.length} local images to migrate. Please wait...`, "info");
-    
+
     let successCount = 0;
     for (let i = 0; i < locals.length; i++) {
       const target = locals[i];
       try {
         showToast(`Migrating (${i + 1}/${locals.length}): ${target.val}`, "info");
-        
+
         // Fetch file over HTTP
         const res = await fetch(target.val);
         if (!res.ok) throw new Error(`HTTP status ${res.status}`);
         const blob = await res.blob();
-        
+
         // Extract filename
         const filename = target.val.split('/').pop() || "image.jpg";
         const cleanName = `${Date.now()}_migrated_${filename}`;
         const filePath = `uploads/${cleanName}`;
-        
+
         // Upload to Storage
         const { data, error } = await supabaseClient.storage
           .from("skincare-assets")
           .upload(filePath, blob, { contentType: blob.type, cacheControl: '3600', upsert: true });
-          
+
         if (error) throw error;
-        
+
         // Get public URL
         const { data: urlData } = supabaseClient.storage
           .from("skincare-assets")
           .getPublicUrl(filePath);
-          
+
         const publicUrl = urlData.publicUrl;
-        
+
         // Update local object
         updateNestedValue(activeData, target.path, publicUrl);
         successCount++;
@@ -1686,14 +1686,14 @@ window.migrateAllLocalImages = async function() {
         showToast(`Failed to migrate ${target.val}: ${uploadErr.message}`, "error");
       }
     }
-    
+
     // Auto-save changes to the database
     if (successCount > 0) {
       showToast(`Successfully migrated ${successCount} images. Saving changes to database...`, "info");
       await saveChanges();
       renderCurrentTab();
     }
-  } catch(err) {
+  } catch (err) {
     showToast("Migration error: " + err.message, "error");
   } finally {
     btn.innerHTML = originalText;
@@ -1704,7 +1704,7 @@ window.migrateAllLocalImages = async function() {
 // ── RENDER: GALLERY TAB ──────────────────────────────────
 function renderGalleryTab(panel) {
   const g = activeData.gallery || { eyebrow: "", title: "", titleAccent: "", subtitle: "", categories: [], items: [] };
-  
+
   if (!g.categories) g.categories = ["All", "Treatments", "Academy", "Transformations"];
   if (!g.items) g.items = [];
   activeData.gallery = g;
@@ -1791,7 +1791,7 @@ function renderGalleryTab(panel) {
   `;
 }
 
-window.deleteGalleryItem = async function(index) {
+window.deleteGalleryItem = async function (index) {
   if (confirm("Are you sure you want to delete this gallery image?")) {
     const oldUrl = activeData.gallery.items[index].image;
     activeData.gallery.items.splice(index, 1);
@@ -1802,7 +1802,7 @@ window.deleteGalleryItem = async function(index) {
   }
 };
 
-window.addGalleryItem = function() {
+window.addGalleryItem = function () {
   const g = activeData.gallery;
   const firstCat = g.categories.filter(c => c !== "All")[0] || "Treatments";
   g.items.push({
@@ -1812,24 +1812,24 @@ window.addGalleryItem = function() {
   });
   showToast("Photo added at the bottom.", "success");
   renderCurrentTab();
-  
+
   setTimeout(() => {
     const cards = document.querySelectorAll(".item-card");
-    if(cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
+    if (cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
   }, 100);
 };
 
 // Criteria managers
-window.updateCriteria = function(idx, value) {
+window.updateCriteria = function (idx, value) {
   const g = activeData.gallery;
   const cats = g.categories.filter(c => c !== "All");
   const oldVal = cats[idx];
   const newVal = value.trim();
   if (!newVal) return;
-  
+
   cats[idx] = newVal;
   g.categories = ["All", ...cats];
-  
+
   // Update gallery items utilizing this category
   if (g.items) {
     g.items.forEach(item => {
@@ -1838,20 +1838,20 @@ window.updateCriteria = function(idx, value) {
       }
     });
   }
-  
+
   showToast("Criteria updated successfully.", "success");
   renderCurrentTab();
 };
 
-window.deleteCriteria = async function(idx) {
+window.deleteCriteria = async function (idx) {
   const g = activeData.gallery;
   const cats = g.categories.filter(c => c !== "All");
   const catToDelete = cats[idx];
-  
+
   if (confirm(`Are you sure you want to delete the criteria "${catToDelete}"? This will map existing photos under this criteria to another category.`)) {
     cats.splice(idx, 1);
     g.categories = ["All", ...cats];
-    
+
     const firstCat = cats[0] || "Treatments";
     if (g.items) {
       g.items.forEach(item => {
@@ -1860,25 +1860,25 @@ window.deleteCriteria = async function(idx) {
         }
       });
     }
-    
+
     showToast(`Criteria "${catToDelete}" removed. Saving to database...`, "info");
     await saveChanges();
     renderCurrentTab();
   }
 };
 
-window.addCriteria = function() {
+window.addCriteria = function () {
   const g = activeData.gallery;
   const cats = g.categories.filter(c => c !== "All");
   cats.push("New Category");
   g.categories = ["All", ...cats];
-  
+
   showToast("Criteria added.", "success");
   renderCurrentTab();
 };
 
 // Hero slide helper functions
-window.deleteHeroSlide = async function(idx) {
+window.deleteHeroSlide = async function (idx) {
   const h = activeData.hero;
   if (h.slides.length <= 1) {
     showToast("You must keep at least one slide.", "error");
@@ -1894,7 +1894,7 @@ window.deleteHeroSlide = async function(idx) {
   }
 };
 
-window.addHeroSlide = function() {
+window.addHeroSlide = function () {
   const h = activeData.hero;
   h.slides.push({
     image: "",
@@ -1904,7 +1904,7 @@ window.addHeroSlide = function() {
   });
   showToast("New hero slide added.", "success");
   renderCurrentTab();
-  
+
   setTimeout(() => {
     const cards = document.querySelectorAll(".item-card");
     if (cards.length > 0) cards[cards.length - 1].scrollIntoView({ behavior: "smooth" });
@@ -1914,14 +1914,14 @@ window.addHeroSlide = function() {
 // ── REALTIME PREVIEW FUNCTIONS ──────────────────────────
 let previewZoom = 1;
 
-window.refreshPreview = function() {
+window.refreshPreview = function () {
   const iframe = document.getElementById("previewIframe");
   if (iframe) {
     iframe.src = iframe.src;
   }
 };
 
-window.previewMobile = function() {
+window.previewMobile = function () {
   const iframe = document.getElementById("previewIframe");
   if (iframe) {
     iframe.style.width = "375px";
@@ -1931,7 +1931,7 @@ window.previewMobile = function() {
   }
 };
 
-window.previewDesktop = function() {
+window.previewDesktop = function () {
   const iframe = document.getElementById("previewIframe");
   if (iframe) {
     previewMobileMode = false;
@@ -1942,14 +1942,14 @@ window.previewDesktop = function() {
   }
 };
 
-window.previewZoomIn = function() {
+window.previewZoomIn = function () {
   if (previewZoom < 1.5) {
     previewZoom = parseFloat((previewZoom + 0.1).toFixed(1));
     updatePreviewZoom();
   }
 };
 
-window.previewZoomOut = function() {
+window.previewZoomOut = function () {
   if (previewZoom > 0.5) {
     previewZoom = parseFloat((previewZoom - 0.1).toFixed(1));
     updatePreviewZoom();
@@ -1969,12 +1969,12 @@ function updatePreviewZoom() {
 
 let isPreviewEnabled = false;
 
-window.toggleLivePreview = async function(enabled) {
+window.toggleLivePreview = async function (enabled) {
   isPreviewEnabled = enabled;
   if (activeData && activeData.site) {
     activeData.site.previewEnabled = enabled;
   }
-  
+
   const splitWrapper = document.querySelector(".db-content-split");
   if (splitWrapper) {
     if (enabled) {
@@ -1984,7 +1984,7 @@ window.toggleLivePreview = async function(enabled) {
       splitWrapper.classList.add("preview-disabled");
     }
   }
-  
+
   // Save preview toggle state immediately to Supabase
   if (supabaseClient && activeData) {
     await saveChanges();
@@ -2038,9 +2038,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Select and apply color themes
-window.selectColorTheme = async function(themeName) {
+window.selectColorTheme = async function (themeName) {
   activeData.site.theme = themeName;
-  
+
   if (themeName === 'custom' && !activeData.site.customTheme) {
     activeData.site.customTheme = {
       background: "#1a0a2e",
@@ -2048,7 +2048,7 @@ window.selectColorTheme = async function(themeName) {
       accentHover: "#DB2777"
     };
   }
-  
+
   if (activeData.site.themeEnabled) {
     applyCustomThemeStyles(activeData.site.customTheme);
     document.body.className = "admin-body theme-" + themeName;
@@ -2069,12 +2069,12 @@ function applyCustomThemeStyles(themeObj) {
     styleEl.id = "custom-theme-style";
     document.head.appendChild(styleEl);
   }
-  
+
   if (themeObj && (activeData.site.theme === 'custom') && activeData.site.themeEnabled) {
     const bg = themeObj.background || "#1a0a2e";
     const acc = themeObj.accent || "#EC4899";
     const accHover = themeObj.accentHover || "#DB2777";
-    
+
     const hexToRgb = (hex) => {
       const bigint = parseInt(hex.replace("#", ""), 16);
       if (isNaN(bigint)) return "236, 72, 153"; // fallback pink
@@ -2083,10 +2083,10 @@ function applyCustomThemeStyles(themeObj) {
       const b = bigint & 255;
       return `${r}, ${g}, ${b}`;
     };
-    
+
     const bgRgb = hexToRgb(bg);
     const accRgb = hexToRgb(acc);
-    
+
     const escapedAcc = encodeURIComponent(acc);
     styleEl.innerHTML = `
       body.theme-custom {
@@ -2116,9 +2116,9 @@ function applyCustomThemeStyles(themeObj) {
 }
 
 // Enable/Disable theme customization globally
-window.toggleThemeCustomization = async function(enabled) {
+window.toggleThemeCustomization = async function (enabled) {
   activeData.site.themeEnabled = enabled;
-  
+
   if (enabled) {
     applyCustomThemeStyles(activeData.site.customTheme);
     document.body.className = "admin-body theme-" + (activeData.site.theme || "default");
@@ -2126,27 +2126,27 @@ window.toggleThemeCustomization = async function(enabled) {
     applyCustomThemeStyles(null);
     document.body.className = "admin-body theme-default";
   }
-  
+
   await saveChanges();
   renderCurrentTab();
   sendDataToPreview();
 };
 
 // Live-update specific custom theme hex code or color picker
-window.updateCustomThemeColor = function(key, value) {
+window.updateCustomThemeColor = function (key, value) {
   if (!activeData.site.customTheme) {
     activeData.site.customTheme = { background: "#1a0a2e", accent: "#EC4899", accentHover: "#DB2777" };
   }
   activeData.site.customTheme[key] = value;
-  
+
   // Re-apply styles instantly
   applyCustomThemeStyles(activeData.site.customTheme);
-  
+
   // Dynamic element updates to avoid reset input focus
   const textInput = document.querySelector(`input[oninput="updateCustomThemeColor('${key}', this.value)"][type="text"]`);
   const colorInput = document.querySelector(`input[oninput="updateCustomThemeColor('${key}', this.value)"][type="color"]`);
   if (textInput) textInput.value = value;
   if (colorInput) colorInput.value = value;
-  
+
   sendDataToPreview();
 };
