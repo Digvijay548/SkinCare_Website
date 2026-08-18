@@ -689,12 +689,7 @@ input, select, textarea { font-family: var(--font-body); font-size: 15px; }
   box-shadow: var(--shadow-lg), 0 0 0 3px rgba(var(--ring-rgb), 0.12);
   border-color: rgba(var(--ring-rgb), 0.2); transform: translateY(-6px) scale(1.02);
 }
-.testi-featured { background: var(--plum); border-color: transparent; }
-.testi-featured::before { color: var(--gold); opacity: 0.08; }
-.testi-featured:hover { box-shadow: 0 0 0 2px var(--gold), 0 12px 40px rgba(245,158,11,0.25); }
-.testi-featured .testi-text   { color: rgba(255,255,255,0.75); }
-.testi-featured .testi-author strong { color: white; }
-.testi-featured .testi-author span   { color: rgba(255,255,255,0.4); }
+/* Testimonials uniformity matches the card preset defaults */
 
 .testi-stars { color: var(--gold); font-size: 16px; letter-spacing: 2px; margin-bottom: 16px; display: flex; gap: 2px; }
 .testi-text  { font-size: 15px; color: var(--muted); line-height: 1.75; margin-bottom: 24px; font-style: italic; }
