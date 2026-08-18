@@ -249,6 +249,11 @@ async function handleImageUpload(inputEl, previewId, dataPath) {
   previewEl.appendChild(loadingText);
 
   try {
+    const oldUrl = getNestedValue(activeData, dataPath);
+    if (oldUrl) {
+      await deleteFileFromStorage(oldUrl);
+    }
+
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const filePath = `uploads/${fileName}`;
@@ -298,6 +303,79 @@ function updateNestedValue(obj, path, value) {
   const lastPart = parts[parts.length - 1];
   current[lastPart] = value;
 }
+
+// Get deep nested value safely
+function getNestedValue(obj, path) {
+  try {
+    const parts = path.split('.');
+    let current = obj;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (part.includes('[') && part.includes(']')) {
+        const arrayName = part.split('[')[0];
+        const index = parseInt(part.split('[')[1].replace(']', ''), 10);
+        if (!current[arrayName] || !current[arrayName][index]) return undefined;
+        current = current[arrayName][index];
+      } else {
+        if (!current || current[part] === undefined) return undefined;
+        current = current[part];
+      }
+    }
+    return current;
+  } catch(e) {
+    return undefined;
+  }
+}
+
+// Get path for storage deletion from public URL
+function getStoragePathFromUrl(url) {
+  if (!url || !url.includes("supabase.co/storage/v1/object/public/skincare-assets/")) {
+    return null;
+  }
+  const parts = url.split("/storage/v1/object/public/skincare-assets/");
+  if (parts.length > 1) {
+    return decodeURIComponent(parts[1]);
+  }
+  return null;
+}
+
+// Delete physical file from storage
+async function deleteFileFromStorage(url) {
+  const filePath = getStoragePathFromUrl(url);
+  if (!filePath) return;
+  
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from("skincare-assets")
+      .remove([filePath]);
+    if (error) throw error;
+    console.log(`Deleted file from storage: ${filePath}`);
+  } catch(err) {
+    console.warn(`Failed to delete storage file ${filePath}:`, err.message);
+  }
+}
+
+// Remove image from field, delete from storage, and auto-save
+window.removeImageField = async function(dataPath, previewId) {
+  if (confirm("Are you sure you want to delete this image?")) {
+    const oldUrl = getNestedValue(activeData, dataPath);
+    if (oldUrl) {
+      showToast("Removing image file...", "info");
+      await deleteFileFromStorage(oldUrl);
+    }
+    
+    updateNestedValue(activeData, dataPath, "");
+    
+    const previewEl = document.getElementById(previewId);
+    if (previewEl) {
+      previewEl.innerHTML = `<div class="image-preview-placeholder">No Image</div>`;
+    }
+    
+    showToast("Image removed. Saving database...", "info");
+    await saveChanges();
+    renderCurrentTab();
+  }
+};
 
 // ── TAB RENDERING ──────────────────────────────────────
 
@@ -394,9 +472,12 @@ function renderHeroTab(panel) {
           <img src="${activeData.hero.image}" alt="Hero Image">
         </div>
         <div class="image-upload-controls">
-          <div class="btn btn-outline btn-sm file-input-btn">
-            📤 Upload New Image
-            <input type="file" accept="image/*" onchange="handleImageUpload(this, 'heroImagePreview', 'hero.image')">
+          <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <div class="btn btn-outline btn-sm file-input-btn">
+              📤 Upload New Image
+              <input type="file" accept="image/*" onchange="handleImageUpload(this, 'heroImagePreview', 'hero.image')">
+            </div>
+            ${activeData.hero.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('hero.image', 'heroImagePreview')">🗑️ Remove Image</button>` : ''}
           </div>
           <p>Recommended: 1920x1080px or higher, landscape ratio, premium aesthetic.</p>
           <div class="form-group" style="margin-top: 10px; width: 100%">
@@ -598,9 +679,12 @@ function renderServicesTab(panel) {
             ${svc.image ? `<img src="${svc.image}" alt="Service Image">` : `<div class="image-preview-placeholder">No Image</div>`}
           </div>
           <div class="image-upload-controls">
-            <div class="btn btn-outline btn-sm file-input-btn">
-              📤 Upload Image
-              <input type="file" accept="image/*" onchange="handleImageUpload(this, 'svcImagePrev-${i}', 'services[${i}].image')">
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+              <div class="btn btn-outline btn-sm file-input-btn">
+                📤 Upload Image
+                <input type="file" accept="image/*" onchange="handleImageUpload(this, 'svcImagePrev-${i}', 'services[${i}].image')">
+              </div>
+              ${svc.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('services[${i}].image', 'svcImagePrev-${i}')">🗑️ Remove Image</button>` : ''}
             </div>
             <p>Recommended: Square ratio, clean cosmetology theme.</p>
           </div>
@@ -647,8 +731,10 @@ function renderServicesTab(panel) {
 
 window.deleteService = async function(index) {
   if (confirm("Are you sure you want to delete this service?")) {
+    const oldUrl = activeData.services[index].image;
     activeData.services.splice(index, 1);
     showToast("Service deleted. Saving to database...", "info");
+    if (oldUrl) await deleteFileFromStorage(oldUrl);
     await saveChanges();
     renderCurrentTab();
   }
@@ -793,9 +879,12 @@ function renderAcademyTab(panel) {
           ${acad.image ? `<img src="${acad.image}" alt="Academy Banner">` : `<div class="image-preview-placeholder">No Image</div>`}
         </div>
         <div class="image-upload-controls">
-          <div class="btn btn-outline btn-sm file-input-btn">
-            📤 Upload New Image
-            <input type="file" accept="image/*" onchange="handleImageUpload(this, 'acadImagePreview', 'academic.image')">
+          <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <div class="btn btn-outline btn-sm file-input-btn">
+              📤 Upload New Image
+              <input type="file" accept="image/*" onchange="handleImageUpload(this, 'acadImagePreview', 'academic.image')">
+            </div>
+            ${acad.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('academic.image', 'acadImagePreview')">🗑️ Remove Image</button>` : ''}
           </div>
           <p>Recommended: Landscape image, cosmetology classroom or students in action.</p>
           <div class="form-group" style="margin-top: 10px; width: 100%">
@@ -1063,9 +1152,12 @@ function renderExperienceTab(panel) {
             ${exp.image ? `<img src="${exp.image}" alt="Experience Image">` : `<div class="image-preview-placeholder">No Image</div>`}
           </div>
           <div class="image-upload-controls">
-            <div class="btn btn-outline btn-sm file-input-btn">
-              📤 Upload Image
-              <input type="file" accept="image/*" onchange="handleImageUpload(this, 'expImagePrev-${i}', 'experience[${i}].image')">
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+              <div class="btn btn-outline btn-sm file-input-btn">
+                📤 Upload Image
+                <input type="file" accept="image/*" onchange="handleImageUpload(this, 'expImagePrev-${i}', 'experience[${i}].image')">
+              </div>
+              ${exp.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('experience[${i}].image', 'expImagePrev-${i}')">🗑️ Remove Image</button>` : ''}
             </div>
             <p>Recommended: Landscape spa theme.</p>
           </div>
@@ -1353,9 +1445,12 @@ function renderGalleryTab(panel) {
             ${item.image ? `<img src="${item.image}" alt="Gallery Image">` : `<div class="image-preview-placeholder">No Image</div>`}
           </div>
           <div class="image-upload-controls">
-            <div class="btn btn-outline btn-sm file-input-btn">
-              📤 Upload Photo
-              <input type="file" accept="image/*" onchange="handleImageUpload(this, 'galleryImagePrev-${i}', 'gallery.items[${i}].image')">
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+              <div class="btn btn-outline btn-sm file-input-btn">
+                📤 Upload Photo
+                <input type="file" accept="image/*" onchange="handleImageUpload(this, 'galleryImagePrev-${i}', 'gallery.items[${i}].image')">
+              </div>
+              ${item.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('gallery.items[${i}].image', 'galleryImagePrev-${i}')">🗑️ Remove Image</button>` : ''}
             </div>
             <p>Recommended: landscape aspect ratio.</p>
           </div>
@@ -1398,8 +1493,10 @@ function renderGalleryTab(panel) {
 
 window.deleteGalleryItem = async function(index) {
   if (confirm("Are you sure you want to delete this gallery image?")) {
+    const oldUrl = activeData.gallery.items[index].image;
     activeData.gallery.items.splice(index, 1);
     showToast("Photo deleted. Saving to database...", "info");
+    if (oldUrl) await deleteFileFromStorage(oldUrl);
     await saveChanges();
     renderCurrentTab();
   }
