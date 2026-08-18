@@ -110,7 +110,10 @@ function onLogout() {
 document.getElementById("logoutBtn").addEventListener("click", async () => {
   if (supabaseClient) {
     await supabaseClient.auth.signOut();
-    showToast("Logged out successfully.", "info");
+    showToast("Logged out successfully. Redirecting...", "info");
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 800);
   }
 });
 
