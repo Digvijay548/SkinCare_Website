@@ -278,15 +278,18 @@ function renderAcademy() {
       <div class="courses-grid">
         ${ac.courses.map(c => `
           <div class="course-card">
-            <div class="course-num">${esc(c.num)}</div>
-            <h4>${esc(c.title)}</h4>
-            <p>${esc(c.desc)}</p>
-            <div class="course-meta">
-              <span class="course-duration">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                ${esc(c.duration)}
-              </span>
-              <span class="course-level level-${esc(c.level.toLowerCase())}">${esc(c.level)}</span>
+            ${c.image ? `<div class="course-img"><img src="${esc(c.image)}" alt="${esc(c.title)}" loading="lazy" /></div>` : ''}
+            <div class="course-content">
+              <div class="course-num">${esc(c.num)}</div>
+              <h4>${esc(c.title)}</h4>
+              <p>${esc(c.desc)}</p>
+              <div class="course-meta">
+                <span class="course-duration">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ${esc(c.duration)}
+                </span>
+                <span class="course-level level-${esc((c.level || 'beginner').toLowerCase())}">${esc(c.level)}</span>
+              </div>
             </div>
           </div>
         `).join("")}

@@ -1100,6 +1100,21 @@ function renderAcademyTab(panel) {
         <h4>Course #${course.num || i+1}: ${course.title || "Untitled Course"}</h4>
         <button class="btn btn-danger btn-sm" onclick="deleteCourse(${i})">🗑️ Delete</button>
       </div>
+      <div class="image-upload-wrapper" style="margin-bottom: 14px;">
+        <div class="image-preview" id="courseImgPreview${i}" style="height: 140px;">
+          ${course.image ? `<img src="${course.image}" alt="Course Image">` : `<div class="image-preview-placeholder">No Course Image</div>`}
+        </div>
+        <div class="image-upload-controls">
+          <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <div class="btn btn-outline btn-sm file-input-btn">
+              📤 Upload Image
+              <input type="file" accept="image/*" onchange="handleImageUpload(this, 'courseImgPreview${i}', 'academic.courses[${i}].image')">
+            </div>
+            ${course.image ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeImageField('academic.courses[${i}].image', 'courseImgPreview${i}')">🗑️ Remove</button>` : ''}
+          </div>
+          <p>Upload a course-specific thumbnail or banner image.</p>
+        </div>
+      </div>
       <div class="form-row-2">
         <div class="form-group">
           <label>Course Title</label>
@@ -1234,7 +1249,8 @@ window.addCourse = function() {
     title: "New Cosmetology Course",
     desc: "Description details of what students learn and outcomes.",
     duration: "3 Months",
-    level: "Beginner"
+    level: "Beginner",
+    image: ""
   });
   showToast("Course added at the bottom.", "success");
   renderCurrentTab();
