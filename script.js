@@ -99,6 +99,11 @@ function renderHero() {
         </a>
         <a href="${esc(h.btnSecondary.href)}" class="btn btn-outline btn-lg">${esc(h.btnSecondary.label)}</a>
       </div>
+      <div class="hero-controls" aria-label="Hero slider controls">
+        <button id="heroPrev" class="hero-control-btn" aria-label="Previous slide"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button id="heroPause" class="hero-control-btn" aria-label="Pause slider"><svg id="heroPauseIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+        <button id="heroNext" class="hero-control-btn" aria-label="Next slide"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
       <div class="hero-trust">
         ${h.trust.map((t, i) => `
           ${i > 0 ? '<div class="trust-divider"></div>' : ''}
@@ -165,25 +170,36 @@ function renderHero() {
 
 /* ── HERO BACKGROUND SLIDESHOW ─────────────────── */
 let heroSliderTimer = null;
+let heroSliderPaused = false;
 
 function startHeroSlider(slides) {
-  // Always clear the previous loop — renderAll() can run again on preview updates
   if (heroSliderTimer) { clearInterval(heroSliderTimer); heroSliderTimer = null; }
-
   if (!Array.isArray(slides) || slides.length < 2) return;
 
   const slideEls = document.querySelectorAll("#heroBg .hero-slide");
   const titleEl = document.getElementById("heroTitleEl");
   const titleText = document.getElementById("heroTitleText");
   const titleAccent = document.getElementById("heroTitleAccent");
+  const heroSection = document.getElementById("home");
+  const pauseBtn = document.getElementById("heroPause");
+  const prevBtn = document.getElementById("heroPrev");
+  const nextBtn = document.getElementById("heroNext");
+  const pauseIcon = document.getElementById("heroPauseIcon");
+
   if (slideEls.length < 2) return;
 
   const delay = Number(D.hero.slideInterval) > 0 ? Number(D.hero.slideInterval) : 6000;
   let current = 0;
 
-  heroSliderTimer = setInterval(() => {
-    const next = (current + 1) % slideEls.length;
+  // Reduced motion check
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) {
+    heroSliderPaused = true;
+    updatePauseIcon();
+  }
 
+  function goToSlide(next) {
+    if (next === current) return;
     slideEls[current].classList.remove("active");
     slideEls[next].classList.add("active");
 
@@ -195,11 +211,77 @@ function startHeroSlider(slides) {
         titleAccent.textContent = slides[next].titleAccent ?? "";
         titleEl.style.opacity = "1";
         titleEl.style.transform = "";
-      }, 600);
+      }, 300);
     }
-
     current = next;
-  }, delay);
+  }
+
+  function nextSlide() {
+    goToSlide((current + 1) % slideEls.length);
+  }
+
+  function prevSlide() {
+    goToSlide((current - 1 + slideEls.length) % slideEls.length);
+  }
+
+  function updatePauseIcon() {
+    if (pauseIcon) {
+      if (heroSliderPaused) {
+        pauseIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>'; // Play icon
+        pauseBtn.setAttribute("aria-label", "Play slider");
+      } else {
+        pauseIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'; // Pause icon
+        pauseBtn.setAttribute("aria-label", "Pause slider");
+      }
+    }
+  }
+
+  function startTimer() {
+    if (heroSliderTimer) clearInterval(heroSliderTimer);
+    if (!heroSliderPaused) {
+      heroSliderTimer = setInterval(nextSlide, delay);
+    }
+  }
+
+  if (pauseBtn) {
+    pauseBtn.addEventListener("click", () => {
+      heroSliderPaused = !heroSliderPaused;
+      updatePauseIcon();
+      startTimer();
+    });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      prevSlide();
+      startTimer(); // Reset timer on manual navigation
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      nextSlide();
+      startTimer(); // Reset timer on manual navigation
+    });
+  }
+
+  // Pause on hover/focus
+  if (heroSection) {
+    heroSection.addEventListener("mouseenter", () => {
+      if (heroSliderTimer) clearInterval(heroSliderTimer);
+    });
+    heroSection.addEventListener("mouseleave", () => {
+      startTimer();
+    });
+    heroSection.addEventListener("focusin", () => {
+      if (heroSliderTimer) clearInterval(heroSliderTimer);
+    });
+    heroSection.addEventListener("focusout", () => {
+      startTimer();
+    });
+  }
+
+  startTimer();
 }
 
 /* ── RENDER: ABOUT ────────────────────────────────────── */
@@ -505,6 +587,10 @@ function renderAppointment() {
         <div class="form-header">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="#25D366"/></svg>
           <span>${esc(a.formTitle)}</span>
+        </div>
+        <div id="formErrorSummary" class="form-error-summary hidden" role="alert" tabindex="-1" aria-labelledby="errorSummaryTitle">
+          <h4 id="errorSummaryTitle">There is a problem</h4>
+          <ul id="errorSummaryList"></ul>
         </div>
         <div class="appt-form" id="appointmentForm">
           <div class="form-group">
@@ -953,10 +1039,19 @@ function initBehaviours() {
     }, { threshold: 0.3 }).observe(processCard);
   }
 
-  /* ── FORM FOCUS ── */
+  /* ── FORM FOCUS & VALIDATION ── */
   document.querySelectorAll(".form-group input,.form-group select,.form-group textarea").forEach(inp => {
     inp.addEventListener("focus", () => inp.parentElement.classList.add("field-focused"));
-    inp.addEventListener("blur",  () => inp.parentElement.classList.remove("field-focused"));
+    inp.addEventListener("blur",  () => {
+      inp.parentElement.classList.remove("field-focused");
+      if (inp.hasAttribute('required') && !inp.value.trim()) {
+        showFormError(inp.id, "This field is required.");
+      } else if (inp.id === "patientPhone" && inp.value.trim() && !isValidPhone(inp.value.trim())) {
+        showFormError(inp.id, "Please enter a valid phone number.");
+      } else {
+        clearFormError(inp);
+      }
+    });
   });
 
   /* ── LIGHTBOX MODAL EVENTS ── */
@@ -993,12 +1088,35 @@ function bookOnWhatsApp() {
   const treatment = document.getElementById("treatment").value;
   const message   = document.getElementById("message").value.trim();
 
-  if (!name)                        { showFormError("patientName",   "Please enter your full name.");         return; }
-  if (!phone)                       { showFormError("patientPhone",  "Please enter your mobile number.");     return; }
-  if (!isValidPhone(phone))         { showFormError("patientPhone",  "Please enter a valid phone number.");   return; }
-  if (!date)                        { showFormError("preferredDate", "Please select a preferred date.");      return; }
-  if (!time)                        { showFormError("preferredTime", "Please select a preferred time.");      return; }
-  if (!treatment)                   { showFormError("treatment",     "Please select the service required.");  return; }
+  const summaryContainer = document.getElementById("formErrorSummary");
+  const summaryList = document.getElementById("errorSummaryList");
+  
+  if (summaryContainer && summaryList) {
+    summaryList.innerHTML = "";
+    summaryContainer.classList.add("hidden");
+  }
+
+  let errors = [];
+  if (!name)                        errors.push({ id: "patientName", msg: "Please enter your full name." });
+  if (!phone)                       errors.push({ id: "patientPhone", msg: "Please enter your mobile number." });
+  else if (!isValidPhone(phone))    errors.push({ id: "patientPhone", msg: "Please enter a valid phone number." });
+  if (!date)                        errors.push({ id: "preferredDate", msg: "Please select a preferred date." });
+  if (!time)                        errors.push({ id: "preferredTime", msg: "Please select a preferred time." });
+  if (!treatment)                   errors.push({ id: "treatment", msg: "Please select the service required." });
+
+  if (errors.length > 0) {
+    errors.forEach(err => showFormError(err.id, err.msg));
+    if (summaryContainer && summaryList) {
+      errors.forEach(err => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="#${err.id}">${err.msg}</a>`;
+        summaryList.appendChild(li);
+      });
+      summaryContainer.classList.remove("hidden");
+      summaryContainer.focus();
+    }
+    return;
+  }
 
   const displayDate = new Date(date).toLocaleDateString("en-IN", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 
@@ -1035,15 +1153,13 @@ function showFormError(fieldId, message) {
   const field = document.getElementById(fieldId);
   if (!field) return;
   clearFormError(field);
-  field.style.borderColor = "#EF4444";
-  field.style.boxShadow = "0 0 0 3px rgba(239,68,68,0.1)";
+  field.style.borderColor = "#DC2626";
+  field.style.boxShadow = "0 0 0 3px rgba(220,38,38,0.15)";
   const err = document.createElement("p");
   err.className = "form-error";
-  err.style.cssText = "color:#EF4444;font-size:12px;margin-top:5px;font-weight:500;";
+  err.style.cssText = "color:#DC2626;font-size:12px;margin-top:5px;font-weight:500;";
   err.innerHTML = `⚠️ ${message}`;
   field.parentNode.appendChild(err);
-  field.focus();
-  field.scrollIntoView({ behavior:"smooth", block:"center" });
   const clear = () => { clearFormError(field); field.removeEventListener("input", clear); field.removeEventListener("change", clear); };
   field.addEventListener("input", clear);
   field.addEventListener("change", clear);
